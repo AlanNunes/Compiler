@@ -9,6 +9,7 @@ T_POW = 'T_POWER'
 T_LPARAN = 'LPARAN'
 T_RPARAN = 'RPARAN'
 
+
 class Error:
     def __init__(self, name, detail, pos):
         self.name = name
@@ -19,17 +20,20 @@ class Error:
         print(f"'{self.name}': error ocurred in line {self.pos.ln+1}, col {self.pos.col}: {self.detail}")
         raise SystemExit()
 
+
 class DividedByZeroError(Error):
-    def __init__(self, pos, name = "DividedByZero", detail="You cannot divide a value by zero"):
+    def __init__(self, pos, name="DividedByZero", detail="You cannot divide a value by zero"):
         self.name = name
         self.detail = detail
         self.pos = pos
 
+
 class SyntaxError(Error):
-    def __init__(self, pos, detail, name = "SyntaxError"):
+    def __init__(self, pos, detail, name="SyntaxError"):
         self.name = name
         self.detail = detail
         self.pos = pos
+
 
 class Token:
     def __init__(self, type_, pos, value=None):
@@ -38,8 +42,10 @@ class Token:
         self.pos = pos
 
     def __repr__(self):
-        if self.value: return f'{self.type}:{self.value}'
+        if self.value:
+            return f'{self.type}:{self.value}'
         return f'{self.type}'
+
 
 class Lexer:
     def __init__(self, text):
@@ -93,6 +99,7 @@ class Lexer:
             self.advance()
         return Token(T_INT, pos=self.pos, value=int(num_str))
 
+
 class Position:
     def __init__(self, idx, ln, col, text):
         self.idx = idx
@@ -112,8 +119,10 @@ class Position:
     def copy(self):
         return Position(self.idx, self.ln, self.col, self.text)
 
-#class BinOpNode:
+# class BinOpNode:
 #    def __init__(self, )
+
+
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
@@ -121,7 +130,9 @@ class Parser:
         self.advance()
 
     def parse(self):
-        return self.parseExpr() if len(self.tokens) > 0 else Error("Empty code", "You can't run empty code", Position(0, 0, 0, "")).raiseError()
+        if len(self.tokens) > 0:
+            return self.parseExpr()
+        Error("Empty code", "You can't run empty code", Position(0, 0, 0, "")).raiseError()
 
     def advance(self):
         self.tok_idx += 1
@@ -129,6 +140,7 @@ class Parser:
             self.current_token = self.tokens[self.tok_idx]
             return self.current_token
         return
+
     def parseFactor(self):
         if self.current_token.type == T_INT:
             t = self.current_token.value
@@ -145,7 +157,8 @@ class Parser:
             self.advance()
             return t
         else:
-            SyntaxError(self.current_token.pos, f"Expected a value or expression, but found '{self.current_token}'").raiseError()
+            SyntaxError(self.current_token.pos,
+                        f"Expected a value or expression, but found '{self.current_token}'").raiseError()
 
     def parseExpr(self):
         fac1 = self.parseTerm()
@@ -176,10 +189,12 @@ class Parser:
             elif self.current_token.type == T_POW:
                 self.advance()
                 if self.current_token.type not in (T_LPARAN, T_INT):
-                    Error("Invalid power", "A power operator must be followed by '(' or 'integer'", self.current_token.pos).raiseError()
+                    Error("Invalid power", "A power operator must be followed by '(' or 'integer'",
+                          self.current_token.pos).raiseError()
                 fac2 = self.parseFactor()
                 fac1 = fac1 ** fac2
         return fac1
+
 
 def run(text):
     lexer = Lexer(text)
