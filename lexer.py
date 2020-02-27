@@ -16,7 +16,20 @@ class Error:
         self.pos = pos
 
     def raiseError(self):
-        print(f"'{self.name}' error ocurred in line {self.pos.ln}, col {self.pos.col}: {self.detail}")
+        print(f"'{self.name}': error ocurred in line {self.pos.ln+1}, col {self.pos.col}: {self.detail}")
+        raise SystemExit()
+
+class DividedByZeroError(Error):
+    def __init__(self, pos, name = "DividedByZero", detail="You cannot divide a value by zero"):
+        self.name = name
+        self.detail = detail
+        self.pos = pos
+
+class SyntaxError(Error):
+    def __init__(self, pos, detail, name = "SyntaxError"):
+        self.name = name
+        self.detail = detail
+        self.pos = pos
 
 class Token:
     def __init__(self, type_, pos, value=None):
@@ -95,7 +108,7 @@ class Position:
             self.col = 0
             self.ln += 1
         return self
-    
+
     def copy(self):
         return Position(self.idx, self.ln, self.col, self.text)
 
@@ -132,7 +145,7 @@ class Parser:
             self.advance()
             return t
         else:
-            print("Expected a digit, but found %d", self.current_token.value)
+            SyntaxError(self.current_token.pos, f"Expected a value or expression, but found '{self.current_token}'").raiseError()
 
     def parseExpr(self):
         fac1 = self.parseTerm()
@@ -157,12 +170,13 @@ class Parser:
             elif self.current_token.type == T_DIV:
                 self.advance()
                 fac2 = self.parseFactor()
+                if fac2 == 0:
+                    DividedByZeroError(self.current_token.pos).raiseError()
                 fac1 = fac1 / fac2
             elif self.current_token.type == T_POW:
                 self.advance()
                 if self.current_token.type not in (T_LPARAN, T_INT):
                     Error("Invalid power", "A power operator must be followed by '(' or 'integer'", self.current_token.pos).raiseError()
-                    return
                 fac2 = self.parseFactor()
                 fac1 = fac1 ** fac2
         return fac1
