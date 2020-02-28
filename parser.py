@@ -39,8 +39,13 @@ class Parser:
             self.advance()
             return t
         elif self.current_token.type == T_POW:
-            self.advadvance()
+            self.advance()
             t = self.parsePow()
+            self.advance()
+            return t
+        elif self.current_token.type in (T_KEYWORD, T_IDENTIFIER, T_EQ):
+            self.advance()
+            t = self.parseExpr()
             self.advance()
             return t
         else:
@@ -58,6 +63,17 @@ class Parser:
                 self.advance()
                 fac2 = self.parseTerm()
                 fac1 = fac1 - fac2
+        while self.current_token.type == T_KEYWORD:
+            self.advance()
+            if self.current_token.type != T_IDENTIFIER:
+                SyntaxError(
+                    pos=self.pos, detail=f"Expected a identifier, but found '{self.current_token}'")
+            self.advance()
+            if self.current_token.type != T_EQ:
+                SyntaxError(
+                    pos=self.pos, detail=f"Expected a identifier, but found '{self.current_token}'")
+            self.advance()
+        # print(fac1)
         return fac1
 
     def parseTerm(self):
