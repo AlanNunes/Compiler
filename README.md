@@ -2,10 +2,10 @@
 It's the first compiler I write, using Python.
 
 # Grammar
-expr	: KEYWORD:declare IDENTIFIER EQ expr
-      : term (PLUS|MINUS) term
-term	: factor (MUL|DIV) factor
-factor	: INT|FLOAT
+expr	: KEYWORD:declare IDENTIFIER EQ expr\
+      : term (PLUS|MINUS) term\
+term	: factor (MUL|DIV) factor\
+factor	: INT|FLOAT\
 power	: factor ^ factor
 
 # Requirements
