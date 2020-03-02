@@ -21,3 +21,10 @@ class SyntaxError(Error):
         self.name = name
         self.detail = detail
         self.pos = pos
+
+
+class SymbolNotUinique(Error):
+    def __init__(self, pos, detail="You cannot declare to symbols", name="SymbolNotUnique"):
+        self.name = name
+        self.detail = detail
+        self.pos = pos

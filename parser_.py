@@ -1,6 +1,7 @@
 from constant import *
 from error import *
 from ast import *
+import symbolTable
 
 class NodeVisitor(object):
     def visit(self, node):
@@ -8,11 +9,14 @@ class NodeVisitor(object):
             return self.visit_BinOp(node)
         elif isinstance(node, Num):
             return self.visit_Num(node)
+        elif isinstance(node, Assign) or isinstance(node, VarDeclare):
+            return self.visit_assign(node)
 
 
 class Interpreter(NodeVisitor):
     def __init__(self, parser):
         self.parser = parser
+        self.symb_table = symbolTable.SymbolTable()
 
     def visit_BinOp(self, node):
         if node.op.type == T_PLUS:
@@ -23,9 +27,43 @@ class Interpreter(NodeVisitor):
             return self.visit(node.left) * self.visit(node.right)
         elif node.op.type == T_DIV:
             return self.visit(node.left) / self.visit(node.right)
+        elif node.op.type == T_POW:
+            return self.visit(node.left) ** self.visit(node.right)
 
     def visit_Num(self, node):
         return node.value
+
+    def visit_assign(self, node):
+        isDeclare = False
+        if isinstance(node, VarDeclare):
+            node = node.node
+            isDeclare = True
+        left = node.left.token
+        right = self.visit(node.right)
+        if isinstance(right, float) and not (right).is_integer():
+            type = T_FLOAT
+        else:
+            type = T_INT
+            right = int(right)
+        if isDeclare:
+            self.symb_table.insert(left.value, type, right, node.left.token.pos)
+        return right
+
+
+
+class Var(AST):
+    def __init__(self, token):
+        self.token = token
+
+class Assign(AST):
+    def __init__(self, left, op, right):
+        self.left = left
+        self.op = op
+        self.right = right
+
+class VarDeclare(AST):
+    def __init__(self, node):
+        self.node = node
 
 
 class Parser:
@@ -37,7 +75,7 @@ class Parser:
 
     def parse(self):
         if len(self.tokens) > 0:
-            return self.parseExpr()
+            return self.parseStatement()
         Error("Empty code", "You can't run empty code", Position(0, 0, 0, "")).raiseError()
 
     def advance(self):
@@ -68,14 +106,15 @@ class Parser:
             return t
         elif self.current_token.type == T_POW:
             self.advance()
-            t = self.parsePow()
-            self.advance()
-            return t
-        elif self.current_token.type in (T_KEYWORD, T_IDENTIFIER, T_EQ):
-            self.advance()
             t = self.parseExpr()
             self.advance()
             return t
+        elif self.current_token.type in (T_KEYWORD, T_IDENTIFIER):
+            node = self.variable()
+            return node
+        elif self.current_token.type == T_EQ:
+            self.advance()
+            return self.parseExpr()
         else:
             SyntaxError(self.current_token.pos,
                         f"Expected a value or expression, but found '{self.current_token}'").raiseError()
@@ -89,17 +128,8 @@ class Parser:
             elif self.current_token.type == T_MINUS:
                 self.advance()
             fac1 = BinOp(left=fac1, op=token, right=self.parseTerm())
-        while self.current_token.type == T_KEYWORD:
-            token = self.current_token
-            self.advance()
-            if self.current_token.type != T_IDENTIFIER:
-                SyntaxError(
-                    pos=self.pos, detail=f"Expected a identifier, but found '{self.current_token}'")
-            self.advance()
-            if self.current_token.type != T_EQ:
-                SyntaxError(
-                    pos=self.pos, detail=f"Expected a identifier, but found '{self.current_token}'")
-            self.advance()
+        if self.current_token.type == T_EQ:
+            self.parseExpr()
         return fac1
 
     def parseTerm(self):
@@ -117,3 +147,29 @@ class Parser:
                           self.current_token.pos).raiseError()
             fac1 = BinOp(left=fac1, op=token, right=self.parseFactor())
         return fac1
+
+    def parseStatement(self):
+        if self.current_token.type in (T_KEYWORD, T_IDENTIFIER):
+            return self.parseAssignment()
+        else:
+            return self.parseExpr()
+
+    def parseAssignment(self):
+        isDeclare = False
+        if self.current_token.type == T_KEYWORD:
+            isDeclare = True
+            self.advance()
+        left = self.variable()
+        # consume T_EQ token
+        token = self.current_token
+        right = self.parseExpr()
+        assignNode = Assign(left=left, op=token, right=right)
+        if isDeclare:
+            node = VarDeclare(assignNode)
+            return node
+        return assignNode
+
+    def variable(self):
+        node = Var(self.current_token)
+        self.advance()
+        return node
