@@ -1,5 +1,5 @@
 from constant import *
-from ast import Node
+from ast import *
 
 
 class Token:
@@ -19,7 +19,6 @@ class Lexer:
         self.text = text
         self.pos = Position(-1, 0, -1, self.text)
         self.current_char = None
-        self.node = Node()
         self.advance()
 
     def setTokens(self, tokens):
@@ -98,105 +97,6 @@ class Lexer:
             return Token(T_KEYWORD, pos=self.pos, value=id)
         else:
             return Token(T_IDENTIFIER, pos=self.pos, value=id)
-
-    def generate_ast(self):
-        self.advanceTk()
-        if len(self.tokens) > 0:
-            self.parseExpr()
-            return self.node
-        return
-
-    def getNextToken(self):
-        return self.tokens[self.tok_idx+1] if len(self.tokens) > 0 else None
-
-    def parseFactor(self):
-        if self.current_token.type in (T_INT, T_FLOAT):
-            t = self.current_token
-            self.advanceTk()
-            print(f"advanced to {self.current_token}")
-            if self.current_token.type in operators:
-                nTok = self.getNextToken()
-                if nTok != None and nTok.type not in operands + (T_LPARAN,):
-                    SyntaxError(self.current_token.pos,
-                                f"Expected a '+, -, /, *, ^, (' but found {self.current_token}").raiseError()
-            return t
-        elif self.current_token.type == T_LPARAN:
-            self.advanceTk()
-            t = self.parseExpr()
-            self.advanceTk()
-            return t
-        elif self.current_token.type == T_POW:
-            self.advanceTk()
-            t = self.parsePow()
-            self.advanceTk()
-            return t
-        elif self.current_token.type in (T_KEYWORD, T_IDENTIFIER, T_EQ):
-            self.advanceTk()
-            t = self.parseExpr()
-            self.advanceTk()
-            return t
-        else:
-            SyntaxError(self.current_token.pos,
-                        f"Expected a value or expression, but found '{self.current_token}'").raiseError()
-
-    def parseExpr(self):
-        fac1 = self.parseTerm()
-        while self.current_token.type == T_PLUS or self.current_token.type == T_MINUS:
-            if self.current_token.type == T_PLUS:
-                self.node.insert(self.current_token)
-                self.advanceTk()
-                fac2 = self.parseTerm()
-                self.node.insert(fac2)
-                #fac1 = f"({fac1} + {fac2})"
-            elif self.current_token.type == T_MINUS:
-                self.node.insert(self.current_token)
-                self.advanceTk()
-                fac2 = self.parseTerm()
-                self.node.insert(fac2)
-                #fac1 = f"({fac1} - {fac2})"
-        while self.current_token.type == T_KEYWORD:
-            self.advanceTk()
-            if self.current_token.type != T_IDENTIFIER:
-                SyntaxError(
-                    pos=self.pos, detail=f"Expected a identifier, but found '{self.current_token}'")
-            self.advanceTk()
-            if self.current_token.type != T_EQ:
-                SyntaxError(
-                    pos=self.pos, detail=f"Expected a identifier, but found '{self.current_token}'")
-            self.advanceTk()
-        self.node.insert(fac1)
-        return fac1
-
-    def parseTerm(self):
-        fac1 = self.parseFactor()
-        while self.current_token.type == T_MUL or self.current_token.type == T_DIV or self.current_token.type == T_POW:
-            if self.current_token.type == T_MUL:
-                self.node.insert(self.current_token)
-                self.advanceTk()
-                fac2 = self.parseFactor()
-                self.node.insert(fac1)
-                self.node.insert(fac2)
-                #fac1 = f"({fac1} * {fac2})"
-            elif self.current_token.type == T_DIV:
-                self.node.insert(self.current_token)
-                self.advanceTk()
-                fac2 = self.parseFactor()
-                self.node.insert(fac1)
-                self.node.insert(fac2)
-                if fac2 == 0:
-                    DividedByZeroError(self.current_token.pos).raiseError()
-                #fac1 = f"({ac1} / {fac2})"
-            elif self.current_token.type == T_POW:
-                self.node.insert(self.current_token)
-                self.node.insert(fac1)
-                self.advanceTk()
-                if self.current_token.type not in (T_LPARAN, T_INT, T_FLOAT):
-                    Error("Invalid power", "A power operator must be followed by '(' or 'integer'",
-                          self.current_token.pos).raiseError()
-                fac2 = self.parseFactor()
-                self.node.insert(fac2)
-                #fac1 = f"({fac1} ** {fac2})"
-        return fac1
 
 
 class Position:

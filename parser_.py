@@ -1,5 +1,31 @@
 from constant import *
 from error import *
+from ast import *
+
+class NodeVisitor(object):
+    def visit(self, node):
+        if isinstance(node, BinOp):
+            return self.visit_BinOp(node)
+        elif isinstance(node, Num):
+            return self.visit_Num(node)
+
+
+class Interpreter(NodeVisitor):
+    def __init__(self, parser):
+        self.parser = parser
+
+    def visit_BinOp(self, node):
+        if node.op.type == T_PLUS:
+            return self.visit(node.left) + self.visit(node.right)
+        elif node.op.type == T_MINUS:
+            return self.visit(node.left) - self.visit(node.right)
+        elif node.op.type == T_MUL:
+            return self.visit(node.left) * self.visit(node.right)
+        elif node.op.type == T_DIV:
+            return self.visit(node.left) / self.visit(node.right)
+
+    def visit_Num(self, node):
+        return node.value
 
 
 class Parser:
@@ -7,6 +33,7 @@ class Parser:
         self.tokens = tokens
         self.tok_idx = -1
         self.advance()
+        self.ast = AST()
 
     def parse(self):
         if len(self.tokens) > 0:
@@ -25,14 +52,15 @@ class Parser:
 
     def parseFactor(self):
         if self.current_token.type in (T_INT, T_FLOAT):
-            t = self.current_token.value
+            t = self.current_token
+            number = Num(t)
             self.advance()
             if self.current_token.type in operators:
                 nTok = self.getNextToken()
                 if nTok != None and nTok.type not in operands + (T_LPARAN,):
                     SyntaxError(self.current_token.pos,
                                 f"Expected a '+, -, /, *, ^, (' but found {self.current_token}").raiseError()
-            return t
+            return number
         elif self.current_token.type == T_LPARAN:
             self.advance()
             t = self.parseExpr()
@@ -55,15 +83,14 @@ class Parser:
     def parseExpr(self):
         fac1 = self.parseTerm()
         while self.current_token.type == T_PLUS or self.current_token.type == T_MINUS:
+            token = self.current_token
             if self.current_token.type == T_PLUS:
                 self.advance()
-                fac2 = self.parseTerm()
-                fac1 = fac1 + fac2
             elif self.current_token.type == T_MINUS:
                 self.advance()
-                fac2 = self.parseTerm()
-                fac1 = fac1 - fac2
+            fac1 = BinOp(left=fac1, op=token, right=self.parseTerm())
         while self.current_token.type == T_KEYWORD:
+            token = self.current_token
             self.advance()
             if self.current_token.type != T_IDENTIFIER:
                 SyntaxError(
@@ -73,27 +100,20 @@ class Parser:
                 SyntaxError(
                     pos=self.pos, detail=f"Expected a identifier, but found '{self.current_token}'")
             self.advance()
-        # print(fac1)
         return fac1
 
     def parseTerm(self):
         fac1 = self.parseFactor()
         while self.current_token.type == T_MUL or self.current_token.type == T_DIV or self.current_token.type == T_POW:
+            token = self.current_token
             if self.current_token.type == T_MUL:
                 self.advance()
-                fac2 = self.parseFactor()
-                fac1 = fac1 * fac2
             elif self.current_token.type == T_DIV:
                 self.advance()
-                fac2 = self.parseFactor()
-                if fac2 == 0:
-                    DividedByZeroError(self.current_token.pos).raiseError()
-                fac1 = fac1 / fac2
             elif self.current_token.type == T_POW:
                 self.advance()
                 if self.current_token.type not in (T_LPARAN, T_INT, T_FLOAT):
                     Error("Invalid power", "A power operator must be followed by '(' or 'integer'",
                           self.current_token.pos).raiseError()
-                fac2 = self.parseFactor()
-                fac1 = fac1 ** fac2
+            fac1 = BinOp(left=fac1, op=token, right=self.parseFactor())
         return fac1
