@@ -11,6 +11,8 @@ class NodeVisitor(object):
             return self.visit_Num(node)
         elif isinstance(node, Assign) or isinstance(node, VarDeclare):
             return self.visit_assign(node)
+        elif isinstance(node, Var):
+            return self.visit_var(node)
 
 
 class Interpreter(NodeVisitor):
@@ -26,7 +28,9 @@ class Interpreter(NodeVisitor):
         elif node.op.type == T_MUL:
             return self.visit(node.left) * self.visit(node.right)
         elif node.op.type == T_DIV:
-            return self.visit(node.left) / self.visit(node.right)
+            right = self.visit(node.right)
+            if right == 0: DividedByZeroError(node.right.token.pos).raiseError()
+            return self.visit(node.left) / right
         elif node.op.type == T_POW:
             return self.visit(node.left) ** self.visit(node.right)
 
@@ -42,14 +46,20 @@ class Interpreter(NodeVisitor):
         right = self.visit(node.right)
         if isinstance(right, float) and not (right).is_integer():
             type = T_FLOAT
+        elif isDeclare and not right:
+            type = T_NOT_INITIALIZED
+            right = None
         else:
             type = T_INT
             right = int(right)
         if isDeclare:
             self.symb_table.insert(left.value, type, right, node.left.token.pos)
+        else:
+            self.symb_table.update(left.value, type, right, node.left.token.pos)
         return right
 
-
+    def visit_var(self, node):
+        return self.symb_table.getValue(node.token)
 
 class Var(AST):
     def __init__(self, token):
@@ -62,6 +72,10 @@ class Assign(AST):
         self.right = right
 
 class VarDeclare(AST):
+    def __init__(self, node):
+        self.node = node
+
+class NotInitialized:
     def __init__(self, node):
         self.node = node
 
@@ -86,7 +100,7 @@ class Parser:
         return
 
     def getNextToken(self):
-        return self.tokens[self.tok_idx+1] if len(self.tokens) > 0 else None
+        return self.tokens[self.tok_idx+1] if len(self.tokens) > self.tok_idx else None
 
     def parseFactor(self):
         if self.current_token.type in (T_INT, T_FLOAT):
@@ -95,9 +109,9 @@ class Parser:
             self.advance()
             if self.current_token.type in operators:
                 nTok = self.getNextToken()
-                if nTok != None and nTok.type not in operands + (T_LPARAN,):
+                if nTok != None and nTok.type not in operands + (T_LPARAN, T_IDENTIFIER):
                     SyntaxError(self.current_token.pos,
-                                f"Expected a '+, -, /, *, ^, (' but found {self.current_token}").raiseError()
+                                f"Expected a '(, identifier' but found {self.current_token}").raiseError()
             return number
         elif self.current_token.type == T_LPARAN:
             self.advance()
@@ -142,17 +156,18 @@ class Parser:
                 self.advance()
             elif self.current_token.type == T_POW:
                 self.advance()
-                if self.current_token.type not in (T_LPARAN, T_INT, T_FLOAT):
+                if self.current_token.type not in (T_LPARAN, T_INT, T_FLOAT, T_IDENTIFIER):
                     Error("Invalid power", "A power operator must be followed by '(' or 'integer'",
                           self.current_token.pos).raiseError()
             fac1 = BinOp(left=fac1, op=token, right=self.parseFactor())
         return fac1
 
     def parseStatement(self):
-        if self.current_token.type in (T_KEYWORD, T_IDENTIFIER):
+        if self.current_token.type == T_KEYWORD:
             return self.parseAssignment()
-        else:
-            return self.parseExpr()
+        elif self.current_token.type == T_IDENTIFIER and self.getNextToken().type == T_EQ:
+            return self.parseAssignment()
+        return self.parseExpr()
 
     def parseAssignment(self):
         isDeclare = False
@@ -162,8 +177,11 @@ class Parser:
         left = self.variable()
         # consume T_EQ token
         token = self.current_token
-        right = self.parseExpr()
-        assignNode = Assign(left=left, op=token, right=right)
+        if token.type == T_IDENTIFIER and not self.getNextToken():
+            assignNode = Assign(left=left, op=token, right=None)
+        else:
+            right = self.parseExpr()
+            assignNode = Assign(left=left, op=token, right=right)
         if isDeclare:
             node = VarDeclare(assignNode)
             return node

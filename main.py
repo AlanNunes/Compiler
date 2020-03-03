@@ -7,5 +7,5 @@ while True:
     ast = Parser(tokens).parse()
     interpreter = Interpreter(None)
     result = interpreter.visit(ast)
-    interpreter.symb_table.print()
+    #interpreter.symb_table.print()
     print(result)

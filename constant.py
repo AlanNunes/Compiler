@@ -14,6 +14,7 @@ T_RPARAN = 'RPARAN'
 T_KEYWORD = 'T_KEYWORD'
 T_IDENTIFIER = 'T_IDENTIFIER'
 T_EQ = 'T_EQ'
+T_NOT_INITIALIZED = 'T_NOT_INITIALIZED'
 
 keywords = ['declare']
 letters = string.ascii_letters
