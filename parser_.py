@@ -100,7 +100,7 @@ class Parser:
         return
 
     def getNextToken(self):
-        return self.tokens[self.tok_idx+1] if len(self.tokens) > self.tok_idx else None
+        return self.tokens[self.tok_idx + 1] if self.tok_idx + 1 < len(self.tokens) else None
 
     def parseFactor(self):
         if self.current_token.type in (T_INT, T_FLOAT):
@@ -165,7 +165,7 @@ class Parser:
     def parseStatement(self):
         if self.current_token.type == T_KEYWORD:
             return self.parseAssignment()
-        elif self.current_token.type == T_IDENTIFIER and self.getNextToken().type == T_EQ:
+        elif self.current_token.type == T_IDENTIFIER and self.getNextToken() and self.getNextToken().type == T_EQ:
             return self.parseAssignment()
         return self.parseExpr()
 
