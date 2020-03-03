@@ -1,5 +1,8 @@
-expr	: KEYWORD:declare IDENTIFIER EQ expr
-      : term (PLUS|MINUS) term
-term	: factor (MUL|DIV) factor
-factor	: INT|FLOAT
-power	: factor ^ factor
+variable    : KEYWORD IDENTIFIER EQ expr
+            : IDENTIFIER EQ expr
+            : KEYWORD IDENTIFIER
+expr	    : KEYWORD:declare IDENTIFIER EQ expr
+            : term (PLUS|MINUS) term
+term	    : factor (MUL|DIV) factor
+factor	    : INT|FLOAT
+power	    : factor ^ factor

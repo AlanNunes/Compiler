@@ -1,8 +1,11 @@
 import lexer
-from parser import Parser
+from parser_ import Parser, Interpreter
 
 while True:
-    text = input("Enter code > ")
+    text = input("Enter code _> ")
     tokens = lexer.run(text)
-    result = Parser(tokens).parse()
+    ast = Parser(tokens).parse()
+    interpreter = Interpreter(None)
+    result = interpreter.visit(ast)
+    #interpreter.symb_table.print()
     print(result)

@@ -1,13 +1,9 @@
 import lexer
+from parser_ import Parser, Interpreter
 
-########################################
-# Test Abstract Syntax Tree
-########################################
-lexer = lexer.Lexer("1+2+3")
-tokens = lexer.make_tokens()
-lexer.setTokens(tokens)
-ast = lexer.generate_ast()
-print(ast.preorderTraversal(ast))
-########################################
-# End Test Abstract Syntax Tree
-########################################
+text = "2^3"
+tokens = lexer.run(text)
+parser = Parser(tokens).parse()
+interpreter = Interpreter(None)
+result = interpreter.visit(parser)
+print(result)

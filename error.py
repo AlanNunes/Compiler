@@ -21,3 +21,16 @@ class SyntaxError(Error):
         self.name = name
         self.detail = detail
         self.pos = pos
+
+
+class NotUniqueSymbol(Error):
+    def __init__(self, pos, detail="Identifier is already declared", name="SymbolNotUnique"):
+        self.name = name
+        self.detail = detail
+        self.pos = pos
+
+class NotFoundSymbol(Error):
+    def __init__(self, pos, detail="You must declare this identifier before used it", name="NotFoundSymbol"):
+        self.name = name
+        self.detail = detail
+        self.pos = pos
