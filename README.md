@@ -8,7 +8,7 @@ variable   : KEYWORD IDENTIFIER EQ expr\
 expr	       : KEYWORD:declare IDENTIFIER EQ expr\
                : term (PLUS|MINUS) term\
 term        : factor (MUL|DIV) factor\
-factor		    	: INT|FLOAT\
+factor		    	: INT|FLOAT|IDENTIFIER\
 power	    : factor ^ factor
 
 # Requirements
