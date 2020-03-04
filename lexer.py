@@ -48,6 +48,8 @@ class Lexer:
                 tokens.append(self.make_number())
             elif self.current_char in letters:
                 tokens.append(self.make_identifier())
+            elif self.current_char == "\"":
+                tokens.append(self.make_string())
             elif self.current_char == '-':
                 tokens.append(Token(T_MINUS, pos=self.pos))
                 self.advance()
@@ -76,7 +78,6 @@ class Lexer:
         return tokens
 
     def make_number(self):
-        pos_start = self.pos.copy()
         num_str = '0'if self.current_char == '.' else ''
         while self.current_char != None and (self.current_char in digits or self.current_char == '.'):
             num_str += self.current_char
@@ -88,7 +89,6 @@ class Lexer:
             return Token(T_FLOAT, pos=self.pos, value=float(num_str))
 
     def make_identifier(self):
-        pos_start = self.pos.copy()
         id = ''
         while self.current_char != None and self.current_char in letters:
             id += self.current_char
@@ -97,6 +97,15 @@ class Lexer:
             return Token(T_KEYWORD, pos=self.pos, value=id)
         else:
             return Token(T_IDENTIFIER, pos=self.pos, value=id)
+
+    def make_string(self):
+        strVal = ''
+        # consume '"'
+        self.advance()
+        while self.current_char != None and self.current_char != "\"" and self.current_char in letters:
+            strVal += str(self.current_char)
+            self.advance()
+        return Token(T_STRING, pos=self.pos, value=strVal)
 
 
 class Position:

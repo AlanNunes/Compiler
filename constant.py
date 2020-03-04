@@ -4,6 +4,7 @@ digits = '.0123456789'
 
 T_INT = 'T_INT'
 T_FLOAT = 'T_FLOAT'
+T_STRING = 'T_STRING'
 T_PLUS = 'T_PLUS'
 T_MINUS = 'T_MINUS'
 T_DIV = 'T_DIV'

@@ -13,6 +13,8 @@ class NodeVisitor(object):
             return self.visit_assign(node)
         elif isinstance(node, Var):
             return self.visit_var(node)
+        elif isinstance(node, String):
+            return self.visit_String(node)
 
 
 class Interpreter(NodeVisitor):
@@ -37,6 +39,9 @@ class Interpreter(NodeVisitor):
     def visit_Num(self, node):
         return node.value
 
+    def visit_String(self, node):
+        return node.value
+
     def visit_assign(self, node):
         isDeclare = False
         if isinstance(node, VarDeclare):
@@ -46,9 +51,11 @@ class Interpreter(NodeVisitor):
         right = self.visit(node.right)
         if isinstance(right, float) and not (right).is_integer():
             type = T_FLOAT
-        elif isDeclare and not right:
+        elif isDeclare and not right and right != 0:
             type = T_NOT_INITIALIZED
             right = None
+        elif isinstance(right, str):
+            type = T_STRING
         else:
             type = T_INT
             right = int(right)
@@ -85,7 +92,6 @@ class Parser:
         self.tokens = tokens
         self.tok_idx = -1
         self.advance()
-        self.ast = AST()
 
     def parse(self):
         if len(self.tokens) > 0:
@@ -180,7 +186,11 @@ class Parser:
         if token.type == T_IDENTIFIER and not self.getNextToken():
             assignNode = Assign(left=left, op=token, right=None)
         else:
-            right = self.parseExpr()
+            if self.getNextToken() and self.getNextToken().type == T_STRING:
+                self.advance()
+                right = String(self.current_token)
+            else:
+                right = self.parseExpr()
             assignNode = Assign(left=left, op=token, right=right)
         if isDeclare:
             node = VarDeclare(assignNode)

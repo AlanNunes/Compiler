@@ -1,5 +1,7 @@
 class AST(object):
-    pass
+    def __init__(self, token):
+        self.token = token
+        self.value = token.value
 
 
 class BinOp(AST):
@@ -10,6 +12,8 @@ class BinOp(AST):
 
 
 class Num(AST):
-    def __init__(self, token):
-        self.token = token
-        self.value = token.value
+    pass
+
+
+class String(AST):
+    pass
