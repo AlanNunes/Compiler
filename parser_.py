@@ -26,7 +26,11 @@ class Interpreter(NodeVisitor):
         if node.op.type == T_PLUS:
             return self.visit(node.left) + self.visit(node.right)
         elif node.op.type == T_MINUS:
-            return self.visit(node.left) - self.visit(node.right)
+            left = self.visit(node.left)
+            right = self.visit(node.right)
+            if isinstance(left, str) and isinstance(right, str):
+                return left.replace(right, "")
+            return str(left - right)
         elif node.op.type == T_MUL:
             return self.visit(node.left) * self.visit(node.right)
         elif node.op.type == T_DIV:
@@ -96,7 +100,7 @@ class Parser:
     def parse(self):
         if len(self.tokens) > 0:
             return self.parseStatement()
-        Error("Empty code", "You can't run empty code", Position(0, 0, 0, "")).raiseError()
+        #Error("Empty code", "You can't run empty code", self.current_token.pos).raiseError()
 
     def advance(self):
         self.tok_idx += 1
@@ -129,7 +133,7 @@ class Parser:
             t = self.parseExpr()
             self.advance()
             return t
-        elif self.current_token.type in (T_KEYWORD, T_IDENTIFIER):
+        elif self.current_token.type in (T_DECLARE, T_IDENTIFIER):
             node = self.variable()
             return node
         elif self.current_token.type == T_EQ:
@@ -169,15 +173,24 @@ class Parser:
         return fac1
 
     def parseStatement(self):
-        if self.current_token.type == T_KEYWORD:
+        if self.current_token.type == T_DECLARE:
             return self.parseAssignment()
         elif self.current_token.type == T_IDENTIFIER and self.getNextToken() and self.getNextToken().type == T_EQ:
             return self.parseAssignment()
+        elif self.current_token.type == T_IF:
+            return self.parseIfStatement()
         return self.parseExpr()
+
+
+    def parseIfStatement(self):
+        self.advance()
+        # To do: build a condition structure
+        # To do: build a body structure
+        # To do: build a option (else/else if) structure
 
     def parseAssignment(self):
         isDeclare = False
-        if self.current_token.type == T_KEYWORD:
+        if self.current_token.type == T_DECLARE:
             isDeclare = True
             self.advance()
         left = self.variable()

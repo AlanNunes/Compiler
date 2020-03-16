@@ -71,11 +71,31 @@ class Lexer:
             elif self.current_char == '^':
                 tokens.append(Token(T_POW, pos=self.pos))
                 self.advance()
-            elif self.current_char == "=":
-                tokens.append(Token(T_EQ, pos=self.pos))
+            elif self.current_char == ':':
+                tokens.append(Token(T_COLON, pos=self.pos))
                 self.advance()
+            else:
+                tokens.append(self.make_relational_operator())
 
         return tokens
+
+    def make_relational_operator(self):
+        op = ''
+        while self.current_char != None and (self.current_char in ['>', '<', '=']):
+            op += self.current_char
+            self.advance()
+        if op == "=":
+            return Token(T_EQ, pos=self.pos)
+        elif op == ">":
+            return Token(T_GT, pos=self.pos)
+        elif op == "<":
+            return Token(T_LT, pos=self.pos)
+        elif op == ">=":
+            return Token(T_GTEQ, pos=self.pos)
+        elif op == "<=":
+            return Token(T_LTEQ, pos=self.pos)
+        elif op == "==":
+            return Token(T_EQUALITY, pos=self.pos)
 
     def make_number(self):
         num_str = '0'if self.current_char == '.' else ''
@@ -93,8 +113,9 @@ class Lexer:
         while self.current_char != None and self.current_char in letters:
             id += self.current_char
             self.advance()
-        if id in keywords:
-            return Token(T_KEYWORD, pos=self.pos, value=id)
+        for k in keywords:
+            if id in k:
+                return Token(k[id], pos=self.pos, value=id)
         else:
             return Token(T_IDENTIFIER, pos=self.pos, value=id)
 
@@ -102,9 +123,10 @@ class Lexer:
         strVal = ''
         # consume '"'
         self.advance()
-        while self.current_char != None and self.current_char != "\"" and self.current_char in letters:
+        while self.current_char != None and self.current_char != "\"" and self.current_char in letters + ' ':
             strVal += str(self.current_char)
             self.advance()
+        self.advance()
         return Token(T_STRING, pos=self.pos, value=strVal)
 
 

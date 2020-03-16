@@ -11,6 +11,17 @@ class BinOp(AST):
         self.right = right
 
 
+class IfStatement(AST):
+    def __init__(self, cond, body, option):
+        self.cond = cond
+        self.body = body
+        self.option = option
+
+
+class Condition(AST):
+    def __init__(self, expr):
+        self.expr = expr
+
 class Num(AST):
     pass
 

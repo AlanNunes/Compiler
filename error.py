@@ -6,7 +6,7 @@ class Error:
 
     def raiseError(self):
         print(f"'{self.name}': error ocurred in line {self.pos.ln+1}, col {self.pos.col}: {self.detail}")
-        raise SystemExit()
+        #raise SystemExit()
 
 
 class DividedByZeroError(Error):
