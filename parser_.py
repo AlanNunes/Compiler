@@ -15,6 +15,10 @@ class NodeVisitor(object):
             return self.visit_var(node)
         elif isinstance(node, String):
             return self.visit_String(node)
+        elif isinstance(node, Statement):
+            return self.visit_statement(node)
+        elif isinstance(node, If):
+            return self.visit_if(node)
 
 
 class Interpreter(NodeVisitor):
@@ -104,6 +108,21 @@ class Interpreter(NodeVisitor):
             return 1 if (left != 0 or right != 0) else 0
         elif t == T_EQUALITY:
             return 1 if (left == right) else 0
+
+    def visit_statement(self, node):
+        for stmt in node.stmts:
+            self.visit(stmt)
+        return
+
+    def visit_if(self, node):
+        cond = self.visit(node.cond)
+        if cond == 1:
+            return self.visit(node.body)
+        if node.option == None:
+            return
+        if isinstance(node.option, If):
+            return self.visit_if(node.option)
+        return
 
 class Var(AST):
     def __init__(self, token):
@@ -234,6 +253,8 @@ class Parser:
             self.advance()
         elif self.current_token.type == T_ELSEIF:
             option = self.parseIf()
+        #elif self.current_token.type == T_ELSE:
+        #    return Else(body=body)
         return If(cond=cond, body=body, option=option)
         # To do: build a condition structure
         # To do: build a body structure

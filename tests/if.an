@@ -1,7 +1,9 @@
-if 10 > 1:
+if 10 == 1:
 	declare x = 10
 	declare y = 25
-elseif 1 == 1:
+elseif 1 == 10:
 	declare x = 15
+elseif 1 == 1:
+	declare xx = 29
 endif
-declare x = 26
+declare x = 25 ^ 0.5

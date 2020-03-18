@@ -9,11 +9,13 @@ class SymbolTable():
     def insert(self, id, type, val, pos):
         if self.lookup(id):
             NotUniqueSymbol(pos).raiseError()
+            return
         self.tbl[id] = {"type": type, "value": val}
 
     def update(self, id, type, val, pos):
         if not self.lookup(id):
             NotFoundSymbol(pos).raiseError()
+            return
         self.tbl[id] = {"type": type, "value": val}
 
     def lookup(self, id):
