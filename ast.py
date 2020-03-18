@@ -11,12 +11,26 @@ class BinOp(AST):
         self.right = right
 
 
-class IfStatement(AST):
+class Statement(AST):
+    def __init__(self, stmts):
+        self.stmts = stmts
+
+    def add(self, stmt):
+        self.stmts.append(stmt)
+
+
+class If(AST):
     def __init__(self, cond, body, option):
         self.cond = cond
         self.body = body
         self.option = option
 
+class ElseIf(If):
+    pass
+
+class Else(AST):
+    def __init__(self, body):
+        self.body = body
 
 class Condition(AST):
     def __init__(self, expr):

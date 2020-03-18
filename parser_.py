@@ -92,7 +92,7 @@ class Interpreter(NodeVisitor):
     def visist_comp_expr(self, node):
         left = self.visit(node.left)
         right = self.visit(node.right)
-        # if the values are not empy strings, convert it to 1
+        # if the values are not empty strings, convert it to 1
         if isinstance(left, str) and not str(left):
             left = 0
         if isinstance(right, str) and not str(right):
@@ -131,8 +131,13 @@ class Parser:
         self.advance()
 
     def parse(self):
+        stmts = Statement([])
         if len(self.tokens) > 0:
-            return self.parseStatement()
+            while self.current_token.type != T_EOF:
+                stmt = self.parseStatement()
+                if stmt != None:
+                    stmts.add(stmt)
+        return stmts
         #Error("Empty code", "You can't run empty code",
         #self.current_token.pos).raiseError()
 
@@ -209,12 +214,27 @@ class Parser:
         elif self.current_token.type == T_IDENTIFIER and self.getNextToken() and self.getNextToken().type == T_EQ:
             return self.parseAssignment()
         elif self.current_token.type == T_IF:
-            return self.parseIfStatement()
+            return self.parseIf()
         return self.parseExpr()
 
 
-    def parseIfStatement(self):
+    def parseIf(self):
         self.advance()
+        cond = self.parseExpr()
+        if not self.current_token.type == T_COLON:
+            SyntaxError(pos=self.current_token.pos, detail=f"Expected a ':' but found {self.current_token}").raiseError()
+        self.advance()
+        t = self.current_token
+        stmt = Statement([])
+        while self.current_token.type not in (T_ENDIF, T_ELSEIF, T_EOF):
+            stmt.add(self.parseStatement())
+        body = stmt
+        option = None
+        if self.current_token.type == T_ENDIF:
+            self.advance()
+        elif self.current_token.type == T_ELSEIF:
+            option = self.parseIf()
+        return If(cond=cond, body=body, option=option)
         # To do: build a condition structure
         # To do: build a body structure
         # To do: build a option (else/else if) structure

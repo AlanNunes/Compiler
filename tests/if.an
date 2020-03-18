@@ -1,0 +1,7 @@
+if 10 > 1:
+	declare x = 10
+	declare y = 25
+elseif 1 == 1:
+	declare x = 15
+endif
+declare x = 26

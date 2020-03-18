@@ -17,9 +17,9 @@ class Token:
 class Lexer:
     def __init__(self, text):
         self.text = text
-        self.pos = Position(-1, 0, -1, self.text)
-        self.current_char = None
-        self.advance()
+        self.pos = Position(0, 0, 0, self.text)
+        self.current_char = text[0] if text != None else None
+        #self.advance()
 
     def setTokens(self, tokens):
         self.tokens = tokens
@@ -74,9 +74,12 @@ class Lexer:
             elif self.current_char == ':':
                 tokens.append(Token(T_COLON, pos=self.pos))
                 self.advance()
+            elif self.current_char == '\n':
+                self.advance()
             else:
                 tokens.append(self.make_relational_operator())
-
+        if self.current_char == None:
+            tokens.append(Token(T_EOF, pos=self.pos))
         return tokens
 
     def make_relational_operator(self):

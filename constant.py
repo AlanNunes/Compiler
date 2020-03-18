@@ -33,8 +33,9 @@ T_EQUALITY = 'T_EQUALITY'
 T_COLON = 'T_COLON'
 T_AND = 'T_AND'
 T_OR = 'T_OR'
+T_EOF = 'T_EOF'
 
-keywords = [{'declare': T_DECLARE}, {'if': T_IF}, {'else': T_ELSE}, {'endif': T_ENDIF}, {'and': T_AND}, {'or': T_OR}, {'==': T_EQUALITY}]
+keywords = [{'declare': T_DECLARE}, {'if': T_IF}, {'else': T_ELSE}, {'elseif': T_ELSEIF}, {'endif': T_ENDIF}, {'and': T_AND}, {'or': T_OR}, {'==': T_EQUALITY}]
 letters = string.ascii_letters
 
 operators = (T_PLUS, T_MINUS, T_MUL, T_DIV, T_POW)

@@ -1,9 +1,13 @@
+import sys
 import lexer
 from parser_ import Parser, Interpreter
 
-while True:
-    text = input("Enter code _> ")
-    tokens = lexer.run(text)
+#f=open(sys.argv[1], "r")
+f=open("tests/if.an", "r")
+if f.mode == 'r':
+    contents = f.read()
+    print (contents)
+    tokens = lexer.run(contents)
     print(tokens)
     ast = Parser(tokens).parse()
     interpreter = Interpreter(None)
