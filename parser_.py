@@ -39,6 +39,10 @@ class Interpreter(NodeVisitor):
             return self.visit(node.left) / right
         elif node.op.type == T_POW:
             return self.visit(node.left) ** self.visit(node.right)
+        elif node.op.type in (T_GT, T_LT, T_GTEQ, T_LTEQ):
+            return self.visit_arith_expr(node)
+        elif node.op.type in (T_AND, T_OR, T_EQUALITY):
+            return self.visist_comp_expr(node)
 
     def visit_Num(self, node):
         return node.value
@@ -72,6 +76,35 @@ class Interpreter(NodeVisitor):
     def visit_var(self, node):
         return self.symb_table.getValue(node.token)
 
+    def visit_arith_expr(self, node):
+        left = self.visit(node.left)
+        right = self.visit(node.right)
+        t = node.op.type
+        if t == T_GT:
+            return 1 if (left > right) else 0
+        elif t == T_LT:
+            return 1 if (left < right) else 0
+        elif t == T_GTEQ:
+            return 1 if (left >= right) else 0
+        elif t == T_LTEQ:
+            return 1 if (left <= right) else 0
+
+    def visist_comp_expr(self, node):
+        left = self.visit(node.left)
+        right = self.visit(node.right)
+        # if the values are not empy strings, convert it to 1
+        if isinstance(left, str) and not str(left):
+            left = 0
+        if isinstance(right, str) and not str(right):
+            right = 0
+        t = node.op.type
+        if t == T_AND:
+            return 1 if (left != 0 and right != 0) else 0
+        elif t == T_OR:
+            return 1 if (left != 0 or right != 0) else 0
+        elif t == T_EQUALITY:
+            return 1 if (left == right) else 0
+
 class Var(AST):
     def __init__(self, token):
         self.token = token
@@ -100,7 +133,8 @@ class Parser:
     def parse(self):
         if len(self.tokens) > 0:
             return self.parseStatement()
-        #Error("Empty code", "You can't run empty code", self.current_token.pos).raiseError()
+        #Error("Empty code", "You can't run empty code",
+        #self.current_token.pos).raiseError()
 
     def advance(self):
         self.tok_idx += 1
@@ -117,7 +151,7 @@ class Parser:
             t = self.current_token
             number = Num(t)
             self.advance()
-            if self.current_token.type in operators:
+            if self.current_token.type in operators + (T_GT, T_LT, T_GTEQ, T_LTEQ):
                 nTok = self.getNextToken()
                 if nTok != None and nTok.type not in operands + (T_LPARAN, T_IDENTIFIER):
                     SyntaxError(self.current_token.pos,
@@ -139,18 +173,23 @@ class Parser:
         elif self.current_token.type == T_EQ:
             self.advance()
             return self.parseExpr()
+        elif self.current_token.type == T_STRING:
+            t = String(self.current_token)
+            self.advance()
+            return t
         else:
             SyntaxError(self.current_token.pos,
                         f"Expected a value or expression, but found '{self.current_token}'").raiseError()
 
     def parseExpr(self):
         fac1 = self.parseTerm()
-        while self.current_token.type == T_PLUS or self.current_token.type == T_MINUS:
+        while self.current_token.type in [T_PLUS, T_MINUS, T_AND, T_OR, T_EQUALITY]:
             token = self.current_token
-            if self.current_token.type == T_PLUS:
-                self.advance()
-            elif self.current_token.type == T_MINUS:
-                self.advance()
+            #if self.current_token.type == T_PLUS:
+            #    self.advance()
+            #elif self.current_token.type == T_MINUS:
+            #    self.advance()
+            self.advance()
             fac1 = BinOp(left=fac1, op=token, right=self.parseTerm())
         if self.current_token.type == T_EQ:
             self.parseExpr()
@@ -158,17 +197,9 @@ class Parser:
 
     def parseTerm(self):
         fac1 = self.parseFactor()
-        while self.current_token.type == T_MUL or self.current_token.type == T_DIV or self.current_token.type == T_POW:
+        while self.current_token.type in [T_MUL, T_DIV, T_POW, T_GT, T_LT, T_GTEQ, T_LTEQ]:
             token = self.current_token
-            if self.current_token.type == T_MUL:
-                self.advance()
-            elif self.current_token.type == T_DIV:
-                self.advance()
-            elif self.current_token.type == T_POW:
-                self.advance()
-                if self.current_token.type not in (T_LPARAN, T_INT, T_FLOAT, T_IDENTIFIER):
-                    Error("Invalid power", "A power operator must be followed by '(' or 'integer'",
-                          self.current_token.pos).raiseError()
+            self.advance()
             fac1 = BinOp(left=fac1, op=token, right=self.parseFactor())
         return fac1
 
