@@ -34,7 +34,7 @@ class Interpreter(NodeVisitor):
             right = self.visit(node.right)
             if isinstance(left, str) and isinstance(right, str):
                 return left.replace(right, "")
-            return str(left - right)
+            return left - right
         elif node.op.type == T_MUL:
             return self.visit(node.left) * self.visit(node.right)
         elif node.op.type == T_DIV:

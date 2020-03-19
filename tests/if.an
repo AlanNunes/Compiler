@@ -1,4 +1,4 @@
-if 10 == 1:
+if (10 > (12 - 2)):
 	declare x = 10
 	declare y = 25
 elseif 1 == 10:
