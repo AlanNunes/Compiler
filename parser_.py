@@ -36,6 +36,8 @@ class Interpreter(NodeVisitor):
 
     def visit_BinOp(self, node):
         if node.op.type == T_PLUS:
+            if node.left.token.type in (T_FLOAT, T_INT, T_STRING) and (isinstance(node.left.value, str) or isinstance(node.right.value, str)):
+                return str(self.visit(node.left)) + str(self.visit(node.right))
             return self.visit(node.left) + self.visit(node.right)
         elif node.op.type == T_MINUS:
             left = self.visit(node.left)
@@ -156,8 +158,12 @@ class Interpreter(NodeVisitor):
             while i != count:
                 rtn = self.visit(node.body)
                 i += 1
-                var = node.variable if node.variable.token.type == T_IDENTIFIER else node.variable.left
-                self.symb_table.update(var.token.value, i, var.token.pos)
+                if isinstance(node.variable, VarDeclare):
+                    var = node.variable.node
+                    self.symb_table.update(var.left.token.value, i, var.left.token.pos)
+                else:
+                    var = node.variable if node.variable.token.type == T_IDENTIFIER else node.variable.left
+                    self.symb_table.update(var.token.value, i, var.token.pos)
         else:
             var = node.variable.node
             self.symb_table.insert(id=var.left.token.value, type=var.right.token.type, val=var.right.token.value, pos=var.right.token.pos)

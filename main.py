@@ -3,7 +3,7 @@ import lexer
 from parser_ import Parser, Interpreter
 
 #f=open(sys.argv[1], "r")
-f=open("tests/print.an", "r")
+f=open("tests/loop2.an", "r")
 if f.mode == 'r':
     contents = f.read()
     #print (contents)
