@@ -1,7 +1,17 @@
+loop        : loop variable SEMICOLON cond SEMICOLON expr COLON body ENDLOOP
+            : loop variable SEMICOLON expr COLON body ENDLOOP
+            : loop expr COLON body ENDLOOP
+while       : while cond body endwhile
+            : while cond body elsewhile cond body endwhile
+if          : if cond COLON body ENDIF
+body        : statements
+statement   : variable|if|expr
 variable    : KEYWORD IDENTIFIER EQ expr
             : IDENTIFIER EQ expr
             : KEYWORD IDENTIFIER
+cond        : expr
 expr	    : KEYWORD:declare IDENTIFIER EQ expr
+            : comp-expr (and|or) comp-expr
 comp-expr   : arith-expr (and|or) arith-expr
 arith-expr  : expr (>|<|>=|<=|==) expr
             : term (PLUS|MINUS) term

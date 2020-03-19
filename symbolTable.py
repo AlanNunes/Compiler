@@ -12,11 +12,15 @@ class SymbolTable():
             return
         self.tbl[id] = {"type": type, "value": val}
 
-    def update(self, id, type, val, pos):
+    def update(self, id, val, pos, type=None):
         if not self.lookup(id):
             NotFoundSymbol(pos).raiseError()
             return
-        self.tbl[id] = {"type": type, "value": val}
+        if type != None:
+            self.tbl[id] = {"type": type, "value": val}
+        else:
+            type = self.tbl[id]["type"]
+            self.tbl[id] = {"type": type, "value": val}
 
     def lookup(self, id):
         return id in self.tbl

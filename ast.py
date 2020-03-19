@@ -11,6 +11,14 @@ class BinOp(AST):
         self.right = right
 
 
+class Num(AST):
+    pass
+
+
+class String(AST):
+    pass
+
+
 class Statement(AST):
     def __init__(self, stmts):
         self.stmts = stmts
@@ -36,9 +44,29 @@ class Condition(AST):
     def __init__(self, expr):
         self.expr = expr
 
-class Num(AST):
-    pass
+
+class While(AST):
+    def __init__(self, cond, body, option):
+        self.cond = cond
+        self.body = body
+        self.option = option
 
 
-class String(AST):
-    pass
+class Loop(AST):
+    def __init__(self, expr, body, variable=None, cond=None):
+        self.variable = variable
+        self.cond = cond
+        self.expr = expr
+        self.body = body
+
+    #The types of "loop"
+    #returns 0: loop expr COLON body ENDLOOP
+    #returns 1: loop variable SEMICOLON expr COLON body ENDLOOP
+    #returns 2: loop variable SEMICOLON cond SEMICOLON expr COLON body ENDLOOP
+    def getType(self):
+        if self.expr != None and self.variable == None and self.cond == None:
+            return 0
+        elif self.variable != None and self.cond == None:
+            return 1
+        else:
+            return 2

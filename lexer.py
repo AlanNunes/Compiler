@@ -74,6 +74,9 @@ class Lexer:
             elif self.current_char == ':':
                 tokens.append(Token(T_COLON, pos=self.pos))
                 self.advance()
+            elif self.current_char == ';':
+                tokens.append(Token(T_SEMICOLON, pos=self.pos))
+                self.advance()
             elif self.current_char == '\n':
                 self.advance()
             else:

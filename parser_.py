@@ -19,6 +19,12 @@ class NodeVisitor(object):
             return self.visit_statement(node)
         elif isinstance(node, If):
             return self.visit_if(node)
+        elif isinstance(node, While):
+            return self.visit_while(node)
+        elif isinstance(node, Loop):
+            return self.visit_loop(node)
+        else:
+            return
 
 
 class Interpreter(NodeVisitor):
@@ -72,9 +78,9 @@ class Interpreter(NodeVisitor):
             type = T_INT
             right = int(right)
         if isDeclare:
-            self.symb_table.insert(left.value, type, right, node.left.token.pos)
+            self.symb_table.insert(id=left.value, type=type, val=right, pos=node.left.token.pos)
         else:
-            self.symb_table.update(left.value, type, right, node.left.token.pos)
+            self.symb_table.update(id=left.value, type=type, val=right, pos=node.left.token.pos)
         return right
 
     def visit_var(self, node):
@@ -110,9 +116,10 @@ class Interpreter(NodeVisitor):
             return 1 if (left == right) else 0
 
     def visit_statement(self, node):
+        rtn = None
         for stmt in node.stmts:
-            self.visit(stmt)
-        return
+            rtn = self.visit(stmt)
+        return rtn
 
     def visit_if(self, node):
         cond = self.visit(node.cond)
@@ -124,6 +131,39 @@ class Interpreter(NodeVisitor):
             return self.visit_if(node.option)
         return
 
+    def visit_while(self, node):
+        rtn = None
+        while self.visit(node.cond) == 1:
+            rtn = self.visit(node.body)
+        if node.option is not None:
+            return self.visit(node.option)
+        return rtn
+
+    def visit_loop(self, node):
+        rtn = None
+        lType = node.getType()
+        if lType == 0:
+            count = self.visit(node.expr)
+            i = 0
+            while i != abs(count):
+                rtn = self.visit(node.body)
+                i += 1
+        elif lType == 1:
+            count = self.visit(node.expr)
+            i = self.visit(node.variable)
+            while i != count:
+                rtn = self.visit(node.body)
+                i += 1
+                var = node.variable.node.left
+                self.symb_table.update(var.token.value, i, var.token.pos)
+        else:
+            var = node.variable.node
+            self.symb_table.insert(id=var.left.token.value, type=var.right.token.type, val=var.right.token.value, pos=var.right.token.pos)
+            while self.visit(node.cond) == 1:
+                rtn = self.visit(node.body)
+                res = self.visit(node.expr)
+                self.symb_table.update(id=var.left.token.value, val=res, pos=var.right.token.pos)
+        return rtn
 class Var(AST):
     def __init__(self, token):
         self.token = token
@@ -234,8 +274,80 @@ class Parser:
             return self.parseAssignment()
         elif self.current_token.type == T_IF:
             return self.parseIf()
+        elif self.current_token.type == T_WHILE:
+            return self.parseWhile()
+        elif self.current_token.type == T_LOOP:
+            return self.parseLoop()
         return self.parseExpr()
 
+
+    def parseLoop(self):
+        self.advance()
+        var = None
+        expr = None
+        stmt = self.parseStatement()
+        if isinstance(stmt, Var) or isinstance(stmt, Assign) or isinstance(stmt, VarDeclare):
+            var = stmt
+            if self.current_token.type != T_SEMICOLON:
+                SyntaxError(pos=self.current_token.pos, detail=f"Expected a ';' but found {self.current_token}").raiseError()
+            self.advance()
+            stmt = self.parseStatement()
+            if isinstance(stmt, BinOp) or isinstance(stmt, Num):
+                if stmt.op.type in (T_LT, T_LTEQ, T_GT, T_GTEQ, T_EQUALITY):
+                    cond = stmt
+                    if self.current_token.type != T_SEMICOLON:
+                        SyntaxError(pos=self.current_token.pos, detail=f"Expected a ';' but found {self.current_token}").raiseError()
+                    self.advance()
+                    expr = self.parseStatement()
+                    if self.current_token.type != T_COLON:
+                        SyntaxError(pos=self.current_token.pos, detail=f"Expected a ':' but found {self.current_token}").raiseError()
+                    self.advance()
+                    stmt = Statement([])
+                    while self.current_token.type not in (T_ENDLOOP, T_EOF):
+                        stmt.add(self.parseStatement())
+                    body = stmt
+                    self.advance()
+                    return Loop(variable=var, cond=cond, expr=expr, body=body)
+                expr = stmt
+                if self.current_token.type != T_COLON:
+                    SyntaxError(pos=self.current_token.pos, detail=f"Expected a ':' but found {self.current_token}").raiseError()
+                self.advance()
+                stmt = Statement([])
+                while self.current_token.type not in (T_ENDLOOP, T_EOF):
+                    stmt.add(self.parseStatement())
+                body = stmt
+                self.advance()
+                return Loop(variable=var, expr=expr, body=body)
+        elif isinstance(stmt, BinOp) or isinstance(stmt, Num):
+            expr = stmt
+            if self.current_token.type != T_COLON:
+                SyntaxError(pos=self.current_token.pos, detail=f"Expected a ':' but found {self.current_token}").raiseError()
+            self.advance()
+            stmt = Statement([])
+            while self.current_token.type not in (T_ENDLOOP, T_EOF):
+                stmt.add(self.parseStatement())
+            body = stmt
+            self.advance()
+            return Loop(expr=expr, body=body)
+        else:
+            SyntaxError(pos=self.current_token.pos, detail=f"Expected an expression or variable, but found '{self.current_token}'").raiseError()
+
+
+    def parseWhile(self):
+        self.advance()
+        cond = self.parseExpr()
+        if not self.current_token.type == T_COLON:
+            SyntaxError(pos=self.current_token.pos, detail=f"Expected a ':' but found {self.current_token}").raiseError()
+        self.advance()
+        stmt = Statement([])
+        while self.current_token.type not in (T_ENDWHILE, T_ELSEWHILE, T_EOF):
+            stmt.add(self.parseStatement())
+        body = stmt
+        option = None
+        if self.current_token.type == T_ELSEWHILE:
+            option = self.parseWhile()
+        self.advance()
+        return While(cond=cond, body=body, option=option)
 
     def parseIf(self):
         self.advance()
@@ -253,12 +365,7 @@ class Parser:
             self.advance()
         elif self.current_token.type == T_ELSEIF:
             option = self.parseIf()
-        #elif self.current_token.type == T_ELSE:
-        #    return Else(body=body)
         return If(cond=cond, body=body, option=option)
-        # To do: build a condition structure
-        # To do: build a body structure
-        # To do: build a option (else/else if) structure
 
     def parseAssignment(self):
         isDeclare = False

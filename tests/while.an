@@ -1,0 +1,6 @@
+declare x = 0
+while x < 10:
+	x = x + 1
+elsewhile x < 20:
+	x = x + 10
+endwhile

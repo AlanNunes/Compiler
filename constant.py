@@ -20,6 +20,11 @@ T_IF = 'T_IF'
 T_ELSE = 'T_ELSE'
 T_ELSEIF = 'T_ELSEIF'
 T_ENDIF = 'T_ENDIF'
+T_WHILE = 'T_WHILE'
+T_ENDWHILE = 'T_ENDWHILE'
+T_ELSEWHILE = 'T_ELSEWHILE'
+T_LOOP = 'T_LOOP'
+T_ENDLOOP = 'T_ENDLOOP'
 # Greater Than
 T_GT = 'T_GT'
 # Less Than
@@ -31,11 +36,12 @@ T_LTEQ = 'T_LTEQ'
 # Equality "=="
 T_EQUALITY = 'T_EQUALITY'
 T_COLON = 'T_COLON'
+T_SEMICOLON = 'T_SEMICOLON'
 T_AND = 'T_AND'
 T_OR = 'T_OR'
 T_EOF = 'T_EOF'
 
-keywords = [{'declare': T_DECLARE}, {'if': T_IF}, {'else': T_ELSE}, {'elseif': T_ELSEIF}, {'endif': T_ENDIF}, {'and': T_AND}, {'or': T_OR}, {'==': T_EQUALITY}]
+keywords = [{'declare': T_DECLARE}, {'if': T_IF}, {'else': T_ELSE}, {'elseif': T_ELSEIF}, {'endif': T_ENDIF}, {'and': T_AND}, {'or': T_OR}, {'==': T_EQUALITY}, {'while': T_WHILE}, {'endwhile': T_ENDWHILE}, {'elsewhile': T_ELSEWHILE}, {'loop': T_LOOP}, {'endloop': T_ENDLOOP}]
 letters = string.ascii_letters
 
 operators = (T_PLUS, T_MINUS, T_MUL, T_DIV, T_POW)
