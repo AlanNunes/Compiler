@@ -40,8 +40,9 @@ T_SEMICOLON = 'T_SEMICOLON'
 T_AND = 'T_AND'
 T_OR = 'T_OR'
 T_EOF = 'T_EOF'
+T_PRINT = 'T_PRINT'
 
-keywords = [{'declare': T_DECLARE}, {'if': T_IF}, {'else': T_ELSE}, {'elseif': T_ELSEIF}, {'endif': T_ENDIF}, {'and': T_AND}, {'or': T_OR}, {'==': T_EQUALITY}, {'while': T_WHILE}, {'endwhile': T_ENDWHILE}, {'elsewhile': T_ELSEWHILE}, {'loop': T_LOOP}, {'endloop': T_ENDLOOP}]
+keywords = [{'declare': T_DECLARE}, {'if': T_IF}, {'else': T_ELSE}, {'elseif': T_ELSEIF}, {'endif': T_ENDIF}, {'and': T_AND}, {'or': T_OR}, {'==': T_EQUALITY}, {'while': T_WHILE}, {'endwhile': T_ENDWHILE}, {'elsewhile': T_ELSEWHILE}, {'loop': T_LOOP}, {'endloop': T_ENDLOOP}, {'print': T_PRINT}]
 letters = string.ascii_letters
 
 operators = (T_PLUS, T_MINUS, T_MUL, T_DIV, T_POW)

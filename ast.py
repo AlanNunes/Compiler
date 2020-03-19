@@ -70,3 +70,8 @@ class Loop(AST):
             return 1
         else:
             return 2
+
+
+class Print(AST):
+    def __init__(self, val):
+        self.val = val

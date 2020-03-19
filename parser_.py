@@ -23,6 +23,8 @@ class NodeVisitor(object):
             return self.visit_while(node)
         elif isinstance(node, Loop):
             return self.visit_loop(node)
+        elif isinstance(node, Print):
+            return self.visit_print(node)
         else:
             return
 
@@ -154,7 +156,7 @@ class Interpreter(NodeVisitor):
             while i != count:
                 rtn = self.visit(node.body)
                 i += 1
-                var = node.variable.node.left
+                var = node.variable if node.variable.token.type == T_IDENTIFIER else node.variable.left
                 self.symb_table.update(var.token.value, i, var.token.pos)
         else:
             var = node.variable.node
@@ -164,6 +166,13 @@ class Interpreter(NodeVisitor):
                 res = self.visit(node.expr)
                 self.symb_table.update(id=var.left.token.value, val=res, pos=var.right.token.pos)
         return rtn
+
+    def visit_print(self, node):
+        rtn = self.visit(node.val)
+        print(rtn)
+        return rtn
+
+
 class Var(AST):
     def __init__(self, token):
         self.token = token
@@ -278,8 +287,14 @@ class Parser:
             return self.parseWhile()
         elif self.current_token.type == T_LOOP:
             return self.parseLoop()
+        elif self.current_token.type == T_PRINT:
+            return self.parsePrint()
         return self.parseExpr()
 
+
+    def parsePrint(self):
+        self.advance()
+        return Print(val=self.parseExpr())
 
     def parseLoop(self):
         self.advance()
@@ -292,8 +307,8 @@ class Parser:
                 SyntaxError(pos=self.current_token.pos, detail=f"Expected a ';' but found {self.current_token}").raiseError()
             self.advance()
             stmt = self.parseStatement()
-            if isinstance(stmt, BinOp) or isinstance(stmt, Num):
-                if stmt.op.type in (T_LT, T_LTEQ, T_GT, T_GTEQ, T_EQUALITY):
+            if isinstance(stmt, BinOp) or isinstance(stmt, Num) or isinstance(stmt, Assign):
+                if not isinstance(stmt, Num) and stmt.op.type in (T_LT, T_LTEQ, T_GT, T_GTEQ, T_EQUALITY):
                     cond = stmt
                     if self.current_token.type != T_SEMICOLON:
                         SyntaxError(pos=self.current_token.pos, detail=f"Expected a ';' but found {self.current_token}").raiseError()

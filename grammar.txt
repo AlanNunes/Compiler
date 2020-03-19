@@ -1,3 +1,5 @@
+print       : print string
+print       : print expr
 loop        : loop variable SEMICOLON cond SEMICOLON expr COLON body ENDLOOP
             : loop variable SEMICOLON expr COLON body ENDLOOP
             : loop expr COLON body ENDLOOP

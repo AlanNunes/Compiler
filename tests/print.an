@@ -1,5 +1,3 @@
-declare y = 15
 loop declare x = 0; x < 10; x = x + 1:
-	y = y + x
-	print y
+	print "Hello World"
 endloop

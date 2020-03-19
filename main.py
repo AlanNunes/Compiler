@@ -3,14 +3,14 @@ import lexer
 from parser_ import Parser, Interpreter
 
 #f=open(sys.argv[1], "r")
-f=open("tests/loop.an", "r")
+f=open("tests/print.an", "r")
 if f.mode == 'r':
     contents = f.read()
-    print (contents)
+    #print (contents)
     tokens = lexer.run(contents)
-    print(tokens)
+    #print(tokens)
     ast = Parser(tokens).parse()
     interpreter = Interpreter(None)
     result = interpreter.visit(ast)
-    interpreter.symb_table.print()
-    print(result)
+    #interpreter.symb_table.print()
+    #print(result)
