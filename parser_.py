@@ -19,6 +19,8 @@ class NodeVisitor(object):
             return self.visit_statement(node)
         elif isinstance(node, If):
             return self.visit_if(node)
+        elif isinstance(node, Else):
+            return self.visit_else(node)
         elif isinstance(node, While):
             return self.visit_while(node)
         elif isinstance(node, Loop):
@@ -133,6 +135,8 @@ class Interpreter(NodeVisitor):
             return
         if isinstance(node.option, If):
             return self.visit_if(node.option)
+        elif isinstance(node.option, Else):
+            return self.visit(node.option)
         return
 
     def visit_while(self, node):
@@ -177,6 +181,9 @@ class Interpreter(NodeVisitor):
         rtn = self.visit(node.val)
         print(rtn)
         return rtn
+
+    def visit_else(self, node):
+        return self.visit(node.body)
 
 
 class Var(AST):
@@ -378,7 +385,7 @@ class Parser:
         self.advance()
         t = self.current_token
         stmt = Statement([])
-        while self.current_token.type not in (T_ENDIF, T_ELSEIF, T_EOF):
+        while self.current_token.type not in (T_ENDIF, T_ELSEIF, T_ELSE, T_EOF):
             stmt.add(self.parseStatement())
         body = stmt
         option = None
@@ -386,7 +393,25 @@ class Parser:
             self.advance()
         elif self.current_token.type == T_ELSEIF:
             option = self.parseIf()
+        elif self.current_token.type == T_ELSE:
+            option = self.parseElse()
+        else:
+            SyntaxError(pos=self.current_token.pos, detail=f"Expected a 'endif', 'elseif', 'else' but found {self.current_token}").raiseError()
         return If(cond=cond, body=body, option=option)
+
+    def parseElse(self):
+        self.advance()
+        if not self.current_token.type == T_COLON:
+            SyntaxError(pos=self.current_token.pos, detail=f"Expected a ':' but found {self.current_token}").raiseError()
+        self.advance()
+        stmt = Statement([])
+        while self.current_token.type not in (T_ENDIF, T_EOF):
+            stmt.add(self.parseStatement())
+        body = stmt
+        if self.current_token.type != T_ENDIF:
+            SyntaxError(pos=self.current_token.pos, detail=f"Expected a 'endif' but found {self.current_token}").raiseError()
+        self.advance()
+        return Else(body)
 
     def parseAssignment(self):
         isDeclare = False

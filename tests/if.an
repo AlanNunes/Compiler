@@ -1,9 +1,11 @@
-if (10 > (12 - 2)):
-	declare x = 10
-	declare y = 25
-elseif 1 == 10:
-	declare x = 15
-elseif 1 == 1:
-	declare xx = 29
+declare name = "alan"
+
+if name == "Luan":
+	print "Its " + name
+elseif name == "Tainan":
+	print "Its " + name
+elseif name == "alan":
+	print "Its " + name
+else:
+	print "I dont know who is"
 endif
-declare x = 25 ^ 0.5
