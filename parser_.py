@@ -27,6 +27,8 @@ class NodeVisitor(object):
             return self.visit_loop(node)
         elif isinstance(node, Print):
             return self.visit_print(node)
+        elif isinstance(node, Collection):
+            return node
         else:
             return
 
@@ -82,9 +84,12 @@ class Interpreter(NodeVisitor):
             right = None
         elif isinstance(right, str):
             type = T_STRING
-        else:
+        elif isinstance(right, int):
             type = T_INT
             right = int(right)
+        else:
+            type = T_COLLECTION
+            right = right
         if isDeclare:
             self.symb_table.insert(id=left.value, type=type, val=right, pos=node.left.token.pos)
         else:
@@ -304,6 +309,8 @@ class Parser:
             return self.parseLoop()
         elif self.current_token.type == T_PRINT:
             return self.parsePrint()
+        elif self.current_token.type == T_COMMA:
+            self.advance()
         return self.parseExpr()
 
 
@@ -426,9 +433,13 @@ class Parser:
         if token.type == T_IDENTIFIER and not self.getNextToken():
             assignNode = Assign(left=left, op=token, right=None)
         else:
-            if self.getNextToken() and self.getNextToken().type == T_STRING:
+            if self.getNextToken().type == T_STRING:
                 self.advance()
                 right = String(self.current_token)
+            elif self.getNextToken().type == T_L_BRACKET:
+                self.advance()
+                self.advance()
+                right = self.parseCollection()
             else:
                 right = self.parseExpr()
             assignNode = Assign(left=left, op=token, right=right)
@@ -441,3 +452,11 @@ class Parser:
         node = Var(self.current_token)
         self.advance()
         return node
+
+    def parseCollection(self):
+        collection = Collection()
+        while self.current_token.type != T_R_BRACKET:
+            res = self.parseStatement()
+            collection.add(res)
+        self.advance()
+        return collection

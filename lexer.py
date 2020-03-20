@@ -77,6 +77,15 @@ class Lexer:
             elif self.current_char == ';':
                 tokens.append(Token(T_SEMICOLON, pos=self.pos))
                 self.advance()
+            elif self.current_char == '[':
+                tokens.append(Token(T_L_BRACKET, pos=self.pos))
+                self.advance()
+            elif self.current_char == ']':
+                tokens.append(Token(T_R_BRACKET, pos=self.pos))
+                self.advance()
+            elif self.current_char == ',':
+                tokens.append(Token(T_COMMA, pos=self.pos))
+                self.advance()
             elif self.current_char == '\n':
                 self.advance()
             else:

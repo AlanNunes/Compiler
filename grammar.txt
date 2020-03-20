@@ -11,6 +11,7 @@ statement   : variable|if|expr
 variable    : KEYWORD IDENTIFIER EQ expr
             : IDENTIFIER EQ expr
             : KEYWORD IDENTIFIER
+collection  : l_bracket object T_COMMA object T_COMMA ... r_bracket
 cond        : expr
 expr	    : KEYWORD:declare IDENTIFIER EQ expr
             : comp-expr (and|or) comp-expr
@@ -20,3 +21,6 @@ arith-expr  : expr (>|<|>=|<=|==) expr
 term	    : factor (MUL|DIV) factor
 factor	    : INT|FLOAT
 power	    : factor ^ factor
+l_bracket   : [
+r_bracket   : ]
+object      : any data structure

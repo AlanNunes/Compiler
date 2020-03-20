@@ -75,3 +75,17 @@ class Loop(AST):
 class Print(AST):
     def __init__(self, val):
         self.val = val
+
+
+class Collection(AST):
+    def __init__(self, elements=[]):
+        self.elements = elements
+
+    def add(self, e):
+        self.elements.append(e)
+
+    def isEmpty(self):
+        return not self.elements
+
+    def clear(self):
+        self.elements = []
