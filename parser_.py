@@ -38,7 +38,9 @@ class Interpreter(NodeVisitor):
 
     def visit_BinOp(self, node):
         if node.op.type == T_PLUS:
-            if node.left.token.type in (T_FLOAT, T_INT, T_STRING) and (isinstance(node.left.value, str) or isinstance(node.right.value, str)):
+            left = self.visit(node.left)
+            right = self.visit(node.right)
+            if isinstance(left, str) or isinstance(right, str):
                 return str(self.visit(node.left)) + str(self.visit(node.right))
             return self.visit(node.left) + self.visit(node.right)
         elif node.op.type == T_MINUS:
