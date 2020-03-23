@@ -45,6 +45,8 @@ T_PRINT = 'T_PRINT'
 T_L_BRACKET = 'T_L_BRACKET'
 T_R_BRACKET = 'T_R_BRACKET'
 T_COLLECTION = 'T_COLLECTION'
+T_COLLECTION_ACCESS = 'T_COLLECTION_ACCESS'
+T_INDEX = 'T_INDEX'
 
 
 keywords = [{'declare': T_DECLARE}, {'if': T_IF}, {'else': T_ELSE}, {'elseif': T_ELSEIF}, {'endif': T_ENDIF}, {'and': T_AND}, {'or': T_OR}, {'==': T_EQUALITY}, {'while': T_WHILE}, {'endwhile': T_ENDWHILE}, {'elsewhile': T_ELSEWHILE}, {'loop': T_LOOP}, {'endloop': T_ENDLOOP}, {'print': T_PRINT}]

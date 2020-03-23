@@ -78,7 +78,7 @@ class Print(AST):
 
 
 class Collection(AST):
-    def __init__(self, elements=[]):
+    def __init__(self, elements):
         self.elements = elements
 
     def add(self, e):
@@ -89,3 +89,14 @@ class Collection(AST):
 
     def clear(self):
         self.elements = []
+
+
+class Index:
+    def __init__(self, v):
+        self.v = v
+
+
+class CollectionAccess:
+    def __init__(self, identifier, index):
+        self.identifier = identifier
+        self.index = index

@@ -28,7 +28,11 @@ class NodeVisitor(object):
         elif isinstance(node, Print):
             return self.visit_print(node)
         elif isinstance(node, Collection):
-            return node
+            return self.visit_collection(node)
+        elif isinstance(node, Index):
+            return self.visit_index(node)
+        elif isinstance(node, CollectionAccess):
+            return self.visit_collectionAccess(node)
         else:
             return
 
@@ -193,6 +197,25 @@ class Interpreter(NodeVisitor):
         return self.visit(node.body)
 
 
+    def visit_collectionAccess(self, node):
+        indexes = []
+        value = self.symb_table.getValue(node.identifier)
+        for i in node.index:
+            indexes.append(self.visit(i))
+        for i in indexes:
+            v = value[i]
+        return v
+
+    def visit_index(self, node):
+        return self.visit(node.v)
+
+    def visit_collection(self, node):
+        v = []
+        for i in node.elements:
+            v.append(self.visit(i))
+        return v
+
+
 class Var(AST):
     def __init__(self, token):
         self.token = token
@@ -311,12 +334,14 @@ class Parser:
             return self.parsePrint()
         elif self.current_token.type == T_COMMA:
             self.advance()
+        elif self.current_token.type == T_IDENTIFIER and self.getNextToken() and self.getNextToken().type == T_L_BRACKET:
+            return self.parseCollectionAccess()
         return self.parseExpr()
 
 
     def parsePrint(self):
         self.advance()
-        return Print(val=self.parseExpr())
+        return Print(val=self.parseStatement())
 
     def parseLoop(self):
         self.advance()
@@ -454,9 +479,27 @@ class Parser:
         return node
 
     def parseCollection(self):
-        collection = Collection()
+        collection = Collection([])
         while self.current_token.type != T_R_BRACKET:
-            res = self.parseStatement()
+            if self.current_token.type == T_COMMA:
+                self.advance()
+            if self.current_token.type == T_L_BRACKET:
+                self.advance()
+                res = self.parseCollection()
+            else:
+                res = self.parseStatement()
             collection.add(res)
         self.advance()
         return collection
+
+    def parseCollectionAccess(self):
+        identifier = self.current_token
+        self.advance()
+        indexes = []
+        while self.current_token.type == T_L_BRACKET:
+            self.advance()
+            index = Index(self.parseExpr())
+            indexes.append(index)
+            self.advance()
+        collectionAccess = CollectionAccess(identifier, indexes)
+        return collectionAccess

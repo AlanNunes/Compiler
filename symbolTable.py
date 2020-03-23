@@ -25,8 +25,13 @@ class SymbolTable():
     def lookup(self, id):
         return id in self.tbl
 
-    def getValue(self, id):
-        return self.tbl[id.value]["value"] if self.lookup(id.value) else NotFoundSymbol(id.pos).raiseError()
+    def getValue(self, id, i=None):
+        if not self.lookup(id.value):
+            NotFoundSymbol(id.pos).raiseError()
+            return
+        return self.tbl[id.value]["value"] if i == None else self.tbl[id.value]["value"][i]
+
+
 
     def print(self):
         #print("############################################################################")
