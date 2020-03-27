@@ -9,18 +9,29 @@ class SymbolTable():
     def insert(self, id, type, val, pos):
         if self.lookup(id):
             NotUniqueSymbol(pos).raiseError()
+            return
         self.tbl[id] = {"type": type, "value": val}
 
-    def update(self, id, type, val, pos):
+    def update(self, id, val, pos, type=None):
         if not self.lookup(id):
             NotFoundSymbol(pos).raiseError()
-        self.tbl[id] = {"type": type, "value": val}
+            return
+        if type != None:
+            self.tbl[id] = {"type": type, "value": val}
+        else:
+            type = self.tbl[id]["type"]
+            self.tbl[id] = {"type": type, "value": val}
 
     def lookup(self, id):
         return id in self.tbl
 
-    def getValue(self, id):
-        return self.tbl[id.value]["value"] if self.lookup(id.value) else NotFoundSymbol(id.pos).raiseError()
+    def getValue(self, id, i=None):
+        if not self.lookup(id.value):
+            NotFoundSymbol(id.pos).raiseError()
+            return
+        return self.tbl[id.value]["value"] if i == None else self.tbl[id.value]["value"][i]
+
+
 
     def print(self):
         #print("############################################################################")
