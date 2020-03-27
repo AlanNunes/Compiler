@@ -68,6 +68,7 @@ endwhile
 
 
 ## Loop (for loop)
+#### Sample 1
 ```
 loop declare x = 0; x < 10; x = x + 1:
 	print x
@@ -76,6 +77,7 @@ endloop
 **Output**
 ![Loop](https://i.imgur.com/mtdvGOp.png)
 
+#### Sample 2
 ```
 loop declare i = 0; 10:
 	print "Hello World " + i
@@ -84,6 +86,7 @@ endloop
 **Output**
 ![Loop2](https://i.imgur.com/7nVVlt6.png)
 
+#### Sample 3
 ```
 loop 7:
 	print "Hello World"
@@ -95,3 +98,5 @@ endloop
 # Contact
 E-mail: [alann.625@gmail.com](mailto:alann.625@gmail.com)\
 Linkedin: [Alan Nunes](https://www.linkedin.com/in/alan-nunes-848374152)
+
+**Thank you, I hope you like it!**
