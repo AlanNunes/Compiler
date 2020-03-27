@@ -17,9 +17,9 @@ class Token:
 class Lexer:
     def __init__(self, text):
         self.text = text
-        self.pos = Position(-1, 0, -1, self.text)
-        self.current_char = None
-        self.advance()
+        self.pos = Position(0, 0, 0, self.text)
+        self.current_char = text[0] if text != None else None
+        #self.advance()
 
     def setTokens(self, tokens):
         self.tokens = tokens
@@ -44,10 +44,15 @@ class Lexer:
             elif self.current_char == '+':
                 tokens.append(Token(T_PLUS, pos=self.pos))
                 self.advance()
+            elif self.current_char == '.':
+                tokens.append(Token(T_DOT, pos=self.pos))
+                self.advance()
             elif self.current_char in digits:
                 tokens.append(self.make_number())
             elif self.current_char in letters:
                 tokens.append(self.make_identifier())
+            elif self.current_char == "\"":
+                tokens.append(self.make_string())
             elif self.current_char == '-':
                 tokens.append(Token(T_MINUS, pos=self.pos))
                 self.advance()
@@ -69,14 +74,48 @@ class Lexer:
             elif self.current_char == '^':
                 tokens.append(Token(T_POW, pos=self.pos))
                 self.advance()
-            elif self.current_char == "=":
-                tokens.append(Token(T_EQ, pos=self.pos))
+            elif self.current_char == ':':
+                tokens.append(Token(T_COLON, pos=self.pos))
                 self.advance()
-
+            elif self.current_char == ';':
+                tokens.append(Token(T_SEMICOLON, pos=self.pos))
+                self.advance()
+            elif self.current_char == '[':
+                tokens.append(Token(T_L_BRACKET, pos=self.pos))
+                self.advance()
+            elif self.current_char == ']':
+                tokens.append(Token(T_R_BRACKET, pos=self.pos))
+                self.advance()
+            elif self.current_char == ',':
+                tokens.append(Token(T_COMMA, pos=self.pos))
+                self.advance()
+            elif self.current_char == '\n':
+                self.advance()
+            else:
+                tokens.append(self.make_relational_operator())
+        if self.current_char == None:
+            tokens.append(Token(T_EOF, pos=self.pos))
         return tokens
 
+    def make_relational_operator(self):
+        op = ''
+        while self.current_char != None and (self.current_char in ['>', '<', '=']):
+            op += self.current_char
+            self.advance()
+        if op == "=":
+            return Token(T_EQ, pos=self.pos)
+        elif op == ">":
+            return Token(T_GT, pos=self.pos)
+        elif op == "<":
+            return Token(T_LT, pos=self.pos)
+        elif op == ">=":
+            return Token(T_GTEQ, pos=self.pos)
+        elif op == "<=":
+            return Token(T_LTEQ, pos=self.pos)
+        elif op == "==":
+            return Token(T_EQUALITY, pos=self.pos)
+
     def make_number(self):
-        pos_start = self.pos.copy()
         num_str = '0'if self.current_char == '.' else ''
         while self.current_char != None and (self.current_char in digits or self.current_char == '.'):
             num_str += self.current_char
@@ -88,15 +127,25 @@ class Lexer:
             return Token(T_FLOAT, pos=self.pos, value=float(num_str))
 
     def make_identifier(self):
-        pos_start = self.pos.copy()
         id = ''
         while self.current_char != None and self.current_char in letters:
             id += self.current_char
             self.advance()
-        if id in keywords:
-            return Token(T_KEYWORD, pos=self.pos, value=id)
+        for k in keywords:
+            if id in k:
+                return Token(k[id], pos=self.pos, value=id)
         else:
             return Token(T_IDENTIFIER, pos=self.pos, value=id)
+
+    def make_string(self):
+        strVal = ''
+        # consume '"'
+        self.advance()
+        while self.current_char != None and self.current_char != "\"" and self.current_char in letters + ' ' + digits:
+            strVal += str(self.current_char)
+            self.advance()
+        self.advance()
+        return Token(T_STRING, pos=self.pos, value=strVal)
 
 
 class Position:

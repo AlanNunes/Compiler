@@ -1,0 +1,5 @@
+declare collection = [1, 2, 3, 4, 5]
+append(collection, 6)
+loop declare i = 0; i < count(collection); i = i+1:
+	print collection[i]
+endloop

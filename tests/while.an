@@ -1,0 +1,8 @@
+declare x = 0
+while x < 10:
+	x = x + 1
+	print x
+elsewhile x < 20:
+	x = x + 10
+	print x
+endwhile
