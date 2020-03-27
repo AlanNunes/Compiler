@@ -33,6 +33,12 @@ class NodeVisitor(object):
             return self.visit_index(node)
         elif isinstance(node, CollectionAccess):
             return self.visit_collectionAccess(node)
+        elif isinstance(node, Count):
+            return self.visit_count(node)
+        elif isinstance(node, Append):
+            return self.visit_append(node)
+        elif isinstance(node, CollectionAssign):
+            return self.visist_collAssign(node)
         else:
             return
 
@@ -215,6 +221,36 @@ class Interpreter(NodeVisitor):
             v.append(self.visit(i))
         return v
 
+    def visit_count(self, node):
+        val = self.visit(node.obj)
+        if not isinstance(val, list):
+            return
+        return len(val)
+
+    def visit_append(self, node):
+        identifier = node.collection.token
+        value = self.symb_table.getValue(identifier)
+        value.append(self.visit(node.val))
+        self.symb_table.update(identifier.value, value, pos=identifier.pos)
+        return value
+
+    def visist_collAssign(self, node):
+        coll = self.symb_table.getValue(node.collAccess.identifier)
+        indexes = []
+        value = self.symb_table.getValue(node.collAccess.identifier)
+        last = None
+        for i in node.collAccess.index:
+            indexes.append(self.visit(i))
+        iLen = len(indexes)
+        for i in range(iLen):
+            idx = indexes[i]
+            v = value[idx]
+            if i + 1 == iLen:
+                last = value[i]
+            vArg = v
+        last = value
+        return teste
+
 
 class Var(AST):
     def __init__(self, token):
@@ -293,6 +329,8 @@ class Parser:
             t = String(self.current_token)
             self.advance()
             return t
+        elif self.current_token.type == T_COUNT:
+            return self.parseBuiltInProcedures()
         else:
             SyntaxError(self.current_token.pos,
                         f"Expected a value or expression, but found '{self.current_token}'").raiseError()
@@ -336,6 +374,8 @@ class Parser:
             self.advance()
         elif self.current_token.type == T_IDENTIFIER and self.getNextToken() and self.getNextToken().type == T_L_BRACKET:
             return self.parseCollectionAccess()
+        elif self.current_token.type in builtInProc:
+            return self.parseBuiltInProcedures()
         return self.parseExpr()
 
 
@@ -502,4 +542,44 @@ class Parser:
             indexes.append(index)
             self.advance()
         collectionAccess = CollectionAccess(identifier, indexes)
+        if self.current_token.type == T_EQ:
+            self.advance()
+            right = self.parseExpr()
+            return CollectionAssign(collAccess=collectionAccess, val=right)
         return collectionAccess
+
+    def parseBuiltInProcedures(self):
+        if self.current_token.type == T_COUNT:
+            self.advance()
+            if self.current_token.type != T_LPARAN:
+                return SyntaxError(pos=self.current_token.pos, detail=f"Expected a '(' but found {self.current_token}").raiseError()
+            self.advance()
+            args = self.getArgs()
+            if self.current_token.type != T_RPARAN:
+                return SyntaxError(pos=self.current_token.pos, detail=f"Expected a ')' but found {self.current_token}").raiseError()
+            self.advance()
+            if len(args) > 1:
+                return TooManyArguments(pos=self.current_token.pos, detail=f"Too much arguments specified at procedure. 'Count' expected only 1 argument").raiseError()
+            return Count(args[0])
+        if self.current_token.type == T_APPEND:
+            self.advance()
+            if self.current_token.type != T_LPARAN:
+                return SyntaxError(pos=self.current_token.pos, detail=f"Expected a '(' but found {self.current_token}").raiseError()
+            self.advance()
+            args = self.getArgs()
+            if self.current_token.type != T_RPARAN:
+                return SyntaxError(pos=self.current_token.pos, detail=f"Expected a ')' but found {self.current_token}").raiseError()
+            self.advance()
+            if len(args) < 2:
+                return TooFewArguments(pos=self.current_token.pos, detail=f"Too few arguments specified at procedure. 'Append' expected 2 arguments").raiseError()
+            elif len(args) > 2:
+                return TooManyArguments(pos=self.current_token.pos, detail=f"Too much arguments specified at procedure. 'Append' expected 2 arguments").raiseError()
+            return Append(args[0], args[1])
+
+    def getArgs(self):
+        args = []
+        while self.current_token.type != T_RPARAN:
+            args.append(self.parseExpr())
+            if self.current_token.type == T_COMMA:
+                self.advance()
+        return args

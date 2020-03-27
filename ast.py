@@ -100,3 +100,27 @@ class CollectionAccess:
     def __init__(self, identifier, index):
         self.identifier = identifier
         self.index = index
+
+
+class CollectionAssign:
+    def __init__(self, collAccess, val):
+        self.collAccess = collAccess
+        self.val = val
+
+
+class Procedure:
+    def __init__(self, identifier, args, body):
+        self.identifier = identifier
+        self.args = args
+        self.body = body
+
+
+class Count:
+    def __init__(self, obj):
+        self.obj = obj
+
+
+class Append:
+    def __init__(self, collection, val):
+        self.collection = collection
+        self.val = val

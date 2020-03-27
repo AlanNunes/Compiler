@@ -34,3 +34,24 @@ class NotFoundSymbol(Error):
         self.name = name
         self.detail = detail
         self.pos = pos
+
+
+class TooManyArguments(Error):
+    def __init__(self, pos, detail="Too much arguments specified", name="TooManyArguments"):
+        self.name = name
+        self.detail = detail
+        self.pos = pos
+
+
+class TooFewArguments(Error):
+    def __init__(self, pos, detail="Too few arguments specified", name="TooFewArguments"):
+        self.name = name
+        self.detail = detail
+        self.pos = pos
+
+
+class RunTimeError(Error):
+    def __init__(self, pos, detail, name="RunTimeError"):
+        self.name = name
+        self.detail = detail
+        self.pos = pos

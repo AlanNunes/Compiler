@@ -1,3 +1,5 @@
-declare collection = []
-collection = [10, 15, 26, [11]]
-print collection[3][0]
+declare collection = [1, 2, 3, 4, 5]
+append(collection, 10)
+loop declare i = 0; i < count(collection); i = i+1:
+	print collection[i]
+endloop

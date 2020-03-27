@@ -1,3 +1,7 @@
+TODO:		function	: function IDENTIFIER L_PAREN variable?, ... R_PAREN T_COLLON statements endfunction
+
+append		: append T_L_PAREN collection T_COMMA expr T_R_PAREN
+count		: count T_L_PAREN collection T_R_PAREN
 print       : print string
 print       : print expr
 loop        : loop variable SEMICOLON cond SEMICOLON expr COLON body ENDLOOP
@@ -8,12 +12,12 @@ while       : while cond body endwhile
 if          : if cond COLON body ENDIF
 body        : statements
 statement   : variable|if|expr
-variable    : KEYWORD IDENTIFIER EQ expr
+variable    : declare IDENTIFIER EQ expr
             : IDENTIFIER EQ expr
-            : KEYWORD IDENTIFIER
+            : declare IDENTIFIER
 collection  : l_bracket object T_COMMA object T_COMMA ... r_bracket
 cond        : expr
-expr	    : KEYWORD:declare IDENTIFIER EQ expr
+expr	    : declare IDENTIFIER EQ expr
             : comp-expr (and|or) comp-expr
 comp-expr   : arith-expr (and|or) arith-expr
 arith-expr  : expr (>|<|>=|<=|==) expr

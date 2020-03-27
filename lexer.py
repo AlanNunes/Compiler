@@ -44,6 +44,9 @@ class Lexer:
             elif self.current_char == '+':
                 tokens.append(Token(T_PLUS, pos=self.pos))
                 self.advance()
+            elif self.current_char == '.':
+                tokens.append(Token(T_DOT, pos=self.pos))
+                self.advance()
             elif self.current_char in digits:
                 tokens.append(self.make_number())
             elif self.current_char in letters:
