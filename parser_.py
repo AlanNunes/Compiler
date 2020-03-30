@@ -1,7 +1,8 @@
 from constant import *
 from error import *
 from ast import *
-import symbolTable
+from symbolTable import *
+import uuid
 
 class NodeVisitor(object):
     def visit(self, node):
@@ -46,7 +47,7 @@ class NodeVisitor(object):
 class Interpreter(NodeVisitor):
     def __init__(self, parser):
         self.parser = parser
-        self.symb_table = symbolTable.SymbolTable()
+        self.current_symbTbl = SymbolTable("global")
 
     def visit_BinOp(self, node):
         if node.op.type == T_PLUS:
@@ -101,13 +102,19 @@ class Interpreter(NodeVisitor):
             type = T_COLLECTION
             right = right
         if isDeclare:
-            self.symb_table.insert(id=left.value, type=type, val=right, pos=node.left.token.pos)
+            if not self.current_symbTbl.insert(id=left.value, type=type, val=right):
+                return NotUniqueSymbol(pos=left.pos, detail=f"Identifier '{left.value}' is already declared").raiseError()
         else:
-            self.symb_table.update(id=left.value, type=type, val=right, pos=node.left.token.pos)
+            if not self.current_symbTbl.update(id=left.value, type=type, val=right):
+                return NotFoundSymbol(pos=left.pos, detail=f"Identifier '{left.value}' is not declared").raiseError()
         return right
 
     def visit_var(self, node):
-        return self.symb_table.getValue(node.token)
+        val = self.current_symbTbl.lookup(node.token.value)
+        if val[1]['success']:
+            return val[0]
+        val = val[0]
+        return NotFoundSymbol(pos=node.token.pos).raiseError()
 
     def visit_arith_expr(self, node):
         left = self.visit(node.left)
@@ -145,9 +152,13 @@ class Interpreter(NodeVisitor):
         return rtn
 
     def visit_if(self, node):
+        current_parent = self.current_symbTbl
         cond = self.visit(node.cond)
         if cond == 1:
-            return self.visit(node.body)
+            self.current_symbTbl = SymbolTable(parent=current_parent)
+            rtn = self.visit(node.body)
+            self.current_symbTbl = current_parent
+            return rtn
         if node.option == None:
             return
         if isinstance(node.option, If):
@@ -157,14 +168,19 @@ class Interpreter(NodeVisitor):
         return
 
     def visit_while(self, node):
+        current_parent = self.current_symbTbl
+        self.current_symbTbl = SymbolTable(parent=current_parent)
         rtn = None
         while self.visit(node.cond) == 1:
             rtn = self.visit(node.body)
+        self.current_symbTbl = current_parent
         if node.option is not None:
             return self.visit(node.option)
         return rtn
 
     def visit_loop(self, node):
+        current_parent = self.current_symbTbl
+        self.current_symbTbl = SymbolTable(parent=current_parent)
         rtn = None
         lType = node.getType()
         if lType == 0:
@@ -181,17 +197,18 @@ class Interpreter(NodeVisitor):
                 i += 1
                 if isinstance(node.variable, VarDeclare):
                     var = node.variable.node
-                    self.symb_table.update(var.left.token.value, i, var.left.token.pos)
+                    self.current_symbTbl.update(var.left.token.value, i)
                 else:
                     var = node.variable if node.variable.token.type == T_IDENTIFIER else node.variable.left
-                    self.symb_table.update(var.token.value, i, var.token.pos)
+                    self.current_symbTbl.update(var.token.value, i)
         else:
             var = node.variable.node
-            self.symb_table.insert(id=var.left.token.value, type=var.right.token.type, val=var.right.token.value, pos=var.right.token.pos)
+            self.current_symbTbl.insert(id=var.left.token.value, type=var.right.token.type, val=var.right.token.value)
             while self.visit(node.cond) == 1:
                 rtn = self.visit(node.body)
                 res = self.visit(node.expr)
-                self.symb_table.update(id=var.left.token.value, val=res, pos=var.right.token.pos)
+                self.current_symbTbl.update(id=var.left.token.value, val=res)
+        self.current_symbTbl = current_parent
         return rtn
 
     def visit_print(self, node):
@@ -200,12 +217,19 @@ class Interpreter(NodeVisitor):
         return rtn
 
     def visit_else(self, node):
-        return self.visit(node.body)
+        current_parent = self.current_symbTbl
+        self.current_symbTbl = SymbolTable(parent=current_parent)
+        rtn = self.visit(node.body)
+        self.current_symbTbl = current_parent
+        return rtn
 
 
     def visit_collectionAccess(self, node):
         indexes = []
-        value = self.symb_table.getValue(node.identifier)
+        value = self.current_symbTbl.lookup(node.identifier.value)
+        if not value[1]['success']:
+            return NotFoundSymbol(pos=node.identifier.pos)
+        value = value[0]
         for i in node.index:
             indexes.append(self.visit(i))
         for i in indexes:
@@ -229,15 +253,22 @@ class Interpreter(NodeVisitor):
 
     def visit_append(self, node):
         identifier = node.collection.token
-        value = self.symb_table.getValue(identifier)
+        value = self.current_symbTbl.lookup(identifier.value)
+        if not value[1]['success']:
+            return NotFoundSymbol(pos=identifier.pos)
+        value = value[0]
         value.append(self.visit(node.val))
-        self.symb_table.update(identifier.value, value, pos=identifier.pos)
+        self.current_symbTbl.update(identifier.value, value)
         return value
 
     def visist_collAssign(self, node):
-        coll = self.symb_table.getValue(node.collAccess.identifier)
+        coll = self.current_symbTbl.lookup(node.collAccess.identifier.value)
         indexes = []
-        value = self.symb_table.getValue(node.collAccess.identifier)
+        value = self.current_symbTbl.lookup(node.collAccess.identifier.value)
+        if not (coll[1]['success'] and [1]['success']):
+            return NotFoundSymbol(pos=node.collAccess.identifier.pos)
+        coll = coll[0]
+        value = value[0]
         last = None
         for i in node.collAccess.index:
             indexes.append(self.visit(i))

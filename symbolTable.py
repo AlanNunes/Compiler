@@ -1,45 +1,38 @@
-from error import NotUniqueSymbol, NotFoundSymbol
+import uuid
+class SymbolTable:
+    def __init__(self, scope=None, parent=None):
+        self.scope = scope if scope else uuid.uuid1()
+        self.parent = None if parent == None else parent
+        self.entries = []
 
-
-class SymbolTable():
-    # tbl = [IDENTIFIER, TYPE, VALUE]
-    def __init__(self, tbl={}):
-        self.tbl = tbl
-
-    def insert(self, id, type, val, pos):
-        if self.lookup(id):
-            NotUniqueSymbol(pos).raiseError()
-            return
-        self.tbl[id] = {"type": type, "value": val}
-
-    def update(self, id, val, pos, type=None):
-        if not self.lookup(id):
-            NotFoundSymbol(pos).raiseError()
-            return
-        if type != None:
-            self.tbl[id] = {"type": type, "value": val}
-        else:
-            type = self.tbl[id]["type"]
-            self.tbl[id] = {"type": type, "value": val}
+    def insert(self, id, type, val):
+        if self.getEntry(id):
+            return False
+        self.entries.append({"id": id, "type": type, "val": val})
+        return True
 
     def lookup(self, id):
-        return id in self.tbl
+        entr = next((item for item in self.entries if item["id"] == id), None)
+        if entr:
+            return [entr["val"], {"success": True}]
+        if self.parent:
+            entr = self.parent.lookup(id)
+        if not entr:
+            return [None, {"success": False}]
+        return entr
 
-    def getValue(self, id, i=None):
-        if not self.lookup(id.value):
-            NotFoundSymbol(id.pos).raiseError()
-            return
-        return self.tbl[id.value]["value"] if i == None else self.tbl[id.value]["value"][i]
+    def update(self, id, val, type=None):
+        entr = self.getEntry(id)
+        if entr:
+            if type:
+                entr.update({"id": id, "type": type, "val": val})
+            else:
+                type = entr["type"]
+                entr.update({"id": id, "type": type, "val": val})
+            return True
+        if self.parent:
+            entr = self.parent.update(id, val, type)
+        return True if entr else False
 
-
-
-    def print(self):
-        #print("############################################################################")
-        #print("##                              Symbol Table                              ##")
-        #print("############################################################################")
-        print('#'*70)
-        print('{:^70}'.format("Symbol Table"))
-        print('\n')
-        for t in self.tbl.items():
-            print(f'{t}')
-        print('#'*70)
+    def getEntry(self, id):
+        return next((item for item in self.entries if item["id"] == id), None)

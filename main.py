@@ -2,8 +2,8 @@ import sys
 import lexer
 from parser_ import Parser, Interpreter
 
-f=open(sys.argv[1], "r")
-#f=open("tests/collection.an", "r")
+#f=open(sys.argv[1], "r")
+f=open("tests/collection.an", "r")
 if f.mode == 'r':
     contents = f.read()
     #print (contents)
@@ -12,5 +12,5 @@ if f.mode == 'r':
     ast = Parser(tokens).parse()
     interpreter = Interpreter(None)
     result = interpreter.visit(ast)
-    #interpreter.symb_table.print()
+    #print(interpreter.current_symbTbl)
     #print(result)
