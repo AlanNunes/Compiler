@@ -115,6 +115,13 @@ class Procedure:
         self.body = body
 
 
+# Represents a call to a procedure
+class Activation:
+    def __init__(self, id, args):
+        self.id = id
+        self.args = args
+
+
 class Count:
     def __init__(self, obj):
         self.obj = obj

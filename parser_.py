@@ -40,6 +40,10 @@ class NodeVisitor(object):
             return self.visit_append(node)
         elif isinstance(node, CollectionAssign):
             return self.visist_collAssign(node)
+        elif isinstance(node, Procedure):
+            return self.visit_procedure(node)
+        elif isinstance(node, Activation):
+            return self.visit_activation(node)
         else:
             return
 
@@ -110,10 +114,9 @@ class Interpreter(NodeVisitor):
         return right
 
     def visit_var(self, node):
-        val = self.current_symbTbl.lookup(node.token.value)
-        if val[1]['success']:
-            return val[0]
-        val = val[0]
+        val, success = self.current_symbTbl.lookup(node.token.value)
+        if success:
+            return val
         return NotFoundSymbol(pos=node.token.pos).raiseError()
 
     def visit_arith_expr(self, node):
@@ -226,10 +229,9 @@ class Interpreter(NodeVisitor):
 
     def visit_collectionAccess(self, node):
         indexes = []
-        value = self.current_symbTbl.lookup(node.identifier.value)
-        if not value[1]['success']:
+        value, success = self.current_symbTbl.lookup(node.identifier.value)
+        if not success:
             return NotFoundSymbol(pos=node.identifier.pos)
-        value = value[0]
         for i in node.index:
             indexes.append(self.visit(i))
         for i in indexes:
@@ -253,22 +255,19 @@ class Interpreter(NodeVisitor):
 
     def visit_append(self, node):
         identifier = node.collection.token
-        value = self.current_symbTbl.lookup(identifier.value)
-        if not value[1]['success']:
+        value, success = self.current_symbTbl.lookup(identifier.value)
+        if not success:
             return NotFoundSymbol(pos=identifier.pos)
-        value = value[0]
         value.append(self.visit(node.val))
         self.current_symbTbl.update(identifier.value, value)
         return value
 
     def visist_collAssign(self, node):
-        coll = self.current_symbTbl.lookup(node.collAccess.identifier.value)
+        coll, success = self.current_symbTbl.lookup(node.collAccess.identifier.value)
         indexes = []
-        value = self.current_symbTbl.lookup(node.collAccess.identifier.value)
-        if not (coll[1]['success'] and [1]['success']):
+        value, success_ = self.current_symbTbl.lookup(node.collAccess.identifier.value)
+        if not success or not success_:
             return NotFoundSymbol(pos=node.collAccess.identifier.pos)
-        coll = coll[0]
-        value = value[0]
         last = None
         for i in node.collAccess.index:
             indexes.append(self.visit(i))
@@ -282,6 +281,32 @@ class Interpreter(NodeVisitor):
         last = value
         return teste
 
+    def visit_procedure(self, node):
+        id = node.identifier.value
+        res = self.current_symbTbl.insert(id=id, type=T_FUNCTION, val=node)
+        if not res:
+            return RunTimeError(pos=node.identifier.pos, detail=f"The function '{id.value}' is already defined").raiseError()
+        return
+
+    def visit_activation(self, node):
+        # Check if the activation exists
+        fun, success = self.current_symbTbl.lookup(node.id.value)
+        if not success:
+            return RunTimeError(pos=node.id.pos, detail=f"The function '{node.id.value}' is not defined. You cannot call functions not defined").raiseError()
+        parentST = self.current_symbTbl
+        self.current_symbTbl = SymbolTable(parent=parentST)
+        if len(fun.args) != len(node.args):
+            return TooFewArguments(pos=node.id.pos).raiseError()
+        for i in range(len(fun.args)):
+            id = fun.args[i]
+            val = node.args[i]
+            assignNode = Assign(left=id, op=T_EQ, right=val)
+            declare = VarDeclare(assignNode)
+            self.visit(declare)
+        for stmt in fun.body.stmts:
+            self.visit(stmt)
+        return
+        
 
 class Var(AST):
     def __init__(self, token):
@@ -407,6 +432,10 @@ class Parser:
             return self.parseCollectionAccess()
         elif self.current_token.type in builtInProc:
             return self.parseBuiltInProcedures()
+        elif self.current_token.type == T_FUNCTION:
+            return self.parseFunction()
+        elif self.current_token.type == T_IDENTIFIER and self.getNextToken() and self.getNextToken().type == T_LPARAN:
+            return self.parseActivation()
         return self.parseExpr()
 
 
@@ -606,6 +635,49 @@ class Parser:
             elif len(args) > 2:
                 return TooManyArguments(pos=self.current_token.pos, detail=f"Too much arguments specified at procedure. 'Append' expected 2 arguments").raiseError()
             return Append(args[0], args[1])
+
+    def parseFunction(self):
+        self.advance()
+        if self.current_token.type != T_IDENTIFIER:
+            # TODO: Throw an exception
+            return
+        id = self.current_token
+        self.advance()
+        if self.current_token.type != T_LPARAN:
+            # TODO: Throw an exception
+            return
+        self.advance()
+        args = self.getArgs()
+        for v in args:
+            if v.token.type != T_IDENTIFIER:
+                return SyntaxError(pos=self.current_token.pos, detail=f"You can only use identifier in arguments of a function").raiseError()
+        if self.current_token.type != T_RPARAN:
+            # TODO: Throw an exception
+            return
+        self.advance()
+        if self.current_token.type != T_COLON:
+            # TODO: Throw an exception
+            return
+        self.advance()
+        stmts = Statement([])
+        while self.current_token.type != T_ENDFUN:
+            stmts.add(self.parseStatement())
+        self.advance()
+        return Procedure(identifier=id, args=args, body=stmts)
+
+    def parseActivation(self):
+        id = self.current_token
+        self.advance()
+        if self.current_token.type != T_LPARAN:
+            # TODO: Throw an exception
+            return
+        self.advance()
+        args = self.getArgs()
+        if self.current_token.type != T_RPARAN:
+            # TODO: Throw an exception
+            return
+        self.advance()
+        return Activation(id=id, args=args)
 
     def getArgs(self):
         args = []

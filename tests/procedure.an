@@ -1,0 +1,9 @@
+function isBigger(x, y):
+	if x > y:
+		print "Yes"
+	else:
+		print "No"
+	endif
+endfunction
+
+isBigger(7, 6)

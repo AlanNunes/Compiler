@@ -14,11 +14,11 @@ class SymbolTable:
     def lookup(self, id):
         entr = next((item for item in self.entries if item["id"] == id), None)
         if entr:
-            return [entr["val"], {"success": True}]
+            return [entr["val"], True]
         if self.parent:
             entr = self.parent.lookup(id)
         if not entr:
-            return [None, {"success": False}]
+            return [None, False]
         return entr
 
     def update(self, id, val, type=None):
