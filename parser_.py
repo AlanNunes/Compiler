@@ -305,6 +305,7 @@ class Interpreter(NodeVisitor):
             self.visit(declare)
         for stmt in fun.body.stmts:
             self.visit(stmt)
+        self.current_symbTbl = parentST
         return
         
 
