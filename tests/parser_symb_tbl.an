@@ -1,7 +1,6 @@
-loop declare x = 0; 10*10:
+declare x = 10
+if x > 10:
+	declare x = 20
 	print x
-endloop
-
-loop declare x = 0; x < 49; x = x + 1:
-	print x
-endloop
+endif
+print x

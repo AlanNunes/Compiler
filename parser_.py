@@ -293,10 +293,10 @@ class Parser:
                 self.error = True
             node = VarDeclare(assignNode)
             return node
-        res = self.current_symb_tbl.update(id=left.token.value, val=assignNode.right, type=type)
-        if not res:
-            NotFoundSymbol(pos=left.token.pos).raiseError()
-            self.error = True
+        #res = self.current_symb_tbl.update(id=left.token.value, val=assignNode.right, type=type)
+        #if not res:
+        #    NotFoundSymbol(pos=left.token.pos).raiseError()
+        #    self.error = True
         return assignNode
 
     def variable(self):

@@ -37,6 +37,16 @@ class CSharp(ICodeGenerator):
     def __init__(self, ir, symb_tbl):
         super().__init__(ir, symb_tbl)
 
+
+    def gen_base_structure(self, stmts):
+        stmts_out = self.gen_stmts(stmts)
+        output = "namespace an\n{"
+        output += "\nclass Program\n{"
+        output += "\nstatic void Main()\n{"
+        output += f"\n{stmts_out}"
+        output += "\n}\n}\n}"
+        return output
+
     def gen_stmts(self, stmts):
         statements = "\n"
         for stmt in stmts:
@@ -47,7 +57,7 @@ class CSharp(ICodeGenerator):
     def gen_loop_type1(self, node):
         expr = self.gen_expr(node.expr, "")
         body = self.gen_stmts(node.body.stmts)
-        return f"for (int i = 0; i < {expr}; i = i + 1;)\n{{{body}}}"
+        return f"for (int i = 0; i < {expr}; i += 1)\n{{{body}}}"
 
     def gen_loop_type2(self, node):
         var_arg = node.variable
@@ -55,7 +65,7 @@ class CSharp(ICodeGenerator):
         var = self.gen_var_declaration(var_arg) if isinstance(var_arg, VarDeclare) else self.gen_var_assign(var_arg)
         expr = self.gen_expr(node.expr, "")
         body = self.gen_stmts(node.body.stmts)
-        return f"for ({var} {var_id} < {expr}; {var_id} = {var_id} + 1;)\n{{{body}}}"
+        return f"for ({var} {var_id} < {expr}; {var_id} += + 1)\n{{{body}}}"
 
     def gen_loop_type3(self, node):
         var_arg = node.variable

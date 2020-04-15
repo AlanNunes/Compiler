@@ -3,6 +3,9 @@ while x < 10:
 	x = x + 1
 	print x
 elsewhile x < 20:
-	x = x + 10
+	x = x + 1
+	print x
+elsewhile x < 30:
+	x = x + 1
 	print x
 endwhile
