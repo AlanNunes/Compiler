@@ -130,14 +130,14 @@ class Parser:
 
     def parseLoop(self):
         self.advance()
-        var = None
-        expr = None
-        stmt = self.parseStatement()
         # Create symbol table for while and set it as current
         parentSymbTbl = self.current_symb_tbl
         loop_symbTbl = SymbolTable(parent=parentSymbTbl)
         self.current_symb_tbl = loop_symbTbl
         # Finish symbol table creation
+        var = None
+        expr = None
+        stmt = self.parseStatement()
         if isinstance(stmt, Var) or isinstance(stmt, Assign) or isinstance(stmt, VarDeclare):
             var = stmt
             if self.current_token.type != T_SEMICOLON:

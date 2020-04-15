@@ -44,6 +44,43 @@ class CSharp(ICodeGenerator):
             statements += f"{res}\n"
         return statements
 
+    def gen_loop_type1(self, node):
+        expr = self.gen_expr(node.expr, "")
+        body = self.gen_stmts(node.body.stmts)
+        return f"for (int i = 0; i < {expr}; i = i + 1;)\n{{{body}}}"
+
+    def gen_loop_type2(self, node):
+        var_arg = node.variable
+        var_id = var_arg.node.left.token.value if isinstance(var_arg, VarDeclare) else var_arg.left.token.value
+        var = self.gen_var_declaration(var_arg) if isinstance(var_arg, VarDeclare) else self.gen_var_assign(var_arg)
+        expr = self.gen_expr(node.expr, "")
+        body = self.gen_stmts(node.body.stmts)
+        return f"for ({var} {var_id} < {expr}; {var_id} = {var_id} + 1;)\n{{{body}}}"
+
+    def gen_loop_type3(self, node):
+        var_arg = node.variable
+        var = self.gen_var_declaration(var_arg) if isinstance(var_arg, VarDeclare) else self.gen_var_assign(var_arg)
+        cond = self.gen_expr(node.cond, "")
+        expr = self.gen_var_assign(node.expr)
+        body = self.gen_stmts(node.body.stmts)
+        return f"for ({var} {cond}; {expr})\n{{{body}}}"
+
+    def gen_loop(self, node):
+        type = node.getType()
+        # switch to the loop symbol table
+        parent_symb_tbl = self.current_symb_tbl
+        self.current_symb_tbl = node.symb_tbl
+        # end switch to the loop symbol table
+        if type == 0:
+            output = self.gen_loop_type1(node)
+        elif type == 1:
+            output = self.gen_loop_type2(node)
+        elif type == 2:
+            output = self.gen_loop_type3(node)
+        # switch back to the parent symbol table
+        self.current_symb_tbl = parent_symb_tbl
+        return output
+
     def gen_stmt(self, node):
         if isinstance(node, If):
             return self.gen_if(node)
@@ -53,6 +90,8 @@ class CSharp(ICodeGenerator):
             return self.gen_var_assign(node)
         elif isinstance(node, Print):
             return self.gen_print(node)
+        elif isinstance(node, Loop):
+            return self.gen_loop(node)
         else:
             return # NOT IMPLEMENTED
 
@@ -61,13 +100,28 @@ class CSharp(ICodeGenerator):
         return f"System.Console.WriteLine({val});"
 
     def gen_else(self, node):
+        # switch to the if symbol table
+        parent_symb_tbl = self.current_symb_tbl
+        self.current_symb_tbl = node.symb_tbl
+        # end switch to the if symbol table
+        # generate the statements of else body
         body = self.gen_stmts(node.body.stmts)
+        # switch back to the parent symbol table
+        self.current_symb_tbl = parent_symb_tbl
         return f"else\n{{{body}}}"
 
     def gen_else_if(self, node, output):
+        # switch to the if symbol table
+        parent_symb_tbl = self.current_symb_tbl
+        self.current_symb_tbl = node.symb_tbl
+        # end switch to the if symbol table
+        # generate the condition expression
         cond = self.gen_expr(node.cond, "")
+        # generate the statements of if body
         body = self.gen_stmts(node.body.stmts)
         option = ""
+        # switch back to the parent symbol table
+        self.current_symb_tbl = parent_symb_tbl
         if isinstance(node.option, If):
             option = self.gen_else_if(node.option, "")
         elif isinstance(node.option, Else):
@@ -76,9 +130,15 @@ class CSharp(ICodeGenerator):
         return output
 
     def gen_if(self, node):
+        # switch to the if symbol table
+        parent_symb_tbl = self.current_symb_tbl
+        self.current_symb_tbl = node.symb_tbl
+        # end switch to the if symbol table
         cond = self.gen_expr(node.cond, "")
         body = self.gen_stmts(node.body.stmts)
         option = ""
+        # switch back to the parent symbol table
+        self.current_symb_tbl = parent_symb_tbl
         if isinstance(node.option, If):
             option = self.gen_else_if(node.option, "")
         elif isinstance(node.option, Else):
@@ -95,8 +155,8 @@ class CSharp(ICodeGenerator):
 
     # node: Assign
     def gen_var_assign(self, node):
-        id = node.node.left.token.value
-        res = self.gen_expr(node.node.right, "")
+        id = node.left.token.value
+        res = self.gen_expr(node.right, "")
         return f"{id} = {res};"
 
     def gen_expr(self, node, output):

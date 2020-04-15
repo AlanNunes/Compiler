@@ -1,13 +1,7 @@
-if 10 > 0:
-	print "a"
-	print "stop thinking about it"
-elseif 49 == 12:
-	print "b"
-elseif 49 == 13:
-	print "c"
-else:
-	print "d"
-endif
+loop declare x = 0; 10*10:
+	print x
+endloop
 
-declare x = 10
-declare y = x + 20
+loop declare x = 0; x < 49; x = x + 1:
+	print x
+endloop
