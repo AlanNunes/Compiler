@@ -37,16 +37,36 @@ class CSharp(ICodeGenerator):
     def __init__(self, ir, symb_tbl):
         super().__init__(ir, symb_tbl)
 
+    def gen_stmts(self, stmts):
+        statements = "\n"
+        for stmt in stmts:
+            res = self.gen_stmt(stmt)
+            statements += f"{res}\n"
+        return statements
+
     def gen_stmt(self, node):
-        pass
+        if isinstance(node, If):
+            return self.gen_if(node)
+        elif isinstance(node, VarDeclare):
+            return self.gen_var_declaration(node)
+        elif isinstance(node, Assign):
+            return self.gen_var_assign(node)
+        elif isinstance(node, Print):
+            return self.gen_print(node)
+        else:
+            return # NOT IMPLEMENTED
+
+    def gen_print(self, node):
+        val = self.gen_expr(node.val, "")
+        return f"System.Console.WriteLine({val});"
 
     def gen_else(self, node):
-        body = ""
+        body = self.gen_stmts(node.body.stmts)
         return f"else\n{{{body}}}"
 
     def gen_else_if(self, node, output):
         cond = self.gen_expr(node.cond, "")
-        body = ""
+        body = self.gen_stmts(node.body.stmts)
         option = ""
         if isinstance(node.option, If):
             option = self.gen_else_if(node.option, "")
@@ -57,7 +77,7 @@ class CSharp(ICodeGenerator):
 
     def gen_if(self, node):
         cond = self.gen_expr(node.cond, "")
-        body = ""
+        body = self.gen_stmts(node.body.stmts)
         option = ""
         if isinstance(node.option, If):
             option = self.gen_else_if(node.option, "")
@@ -65,7 +85,7 @@ class CSharp(ICodeGenerator):
             option = self.gen_else(node.option)
         return f"if ({cond})\n{{{body}}}\n{option}"
 
-    # node: VarDeclare 
+    # node: VarDeclare
     def gen_var_declaration(self, node):
         id = node.node.left.token.value
         type = self.current_symb_tbl.getEntry(id)['type']
@@ -93,6 +113,9 @@ class CSharp(ICodeGenerator):
             return output
         elif isinstance(node, Var):
             output += f"{node.token.value}"
+            return output
+        elif isinstance(node, String):
+            output += f"\"{node.token.value}\""
             return output
 
     def gen_op(self, token):

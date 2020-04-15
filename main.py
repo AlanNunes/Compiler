@@ -14,7 +14,7 @@ if f.mode == 'r':
     parser = Parser(tokens)
     ast = parser.parse()
     code_generator = CSharp(ast, parser.current_symb_tbl)
-    res = code_generator.gen_if(ast.stmts[0])
+    res = code_generator.gen_stmts(ast.stmts)
     print(res)
     print("Done")
     #interpreter = Interpreter(None)
