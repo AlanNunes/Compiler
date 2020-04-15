@@ -1,0 +1,11 @@
+if 10 > 0:
+	print "a"
+elseif 49 == 12:
+	print "b"
+elseif 49 == 13:
+	print "c"
+else:
+	print "d"
+endif
+declare x = 10
+declare y = x + 20

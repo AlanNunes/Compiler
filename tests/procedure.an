@@ -1,9 +1,5 @@
-function isBigger(x, y):
-	if x > y:
-		print "Yes"
-	else:
-		print "No"
-	endif
+function speak(x):
+	print x
 endfunction
 
-isBigger(7, 6)
+speak("hello world")

@@ -28,17 +28,19 @@ class Statement(AST):
 
 
 class If(AST):
-    def __init__(self, cond, body, option):
+    def __init__(self, cond, body, option, symb_tbl):
         self.cond = cond
         self.body = body
         self.option = option
+        self.symb_tbl = symb_tbl
 
 class ElseIf(If):
     pass
 
 class Else(AST):
-    def __init__(self, body):
+    def __init__(self, body, symb_tbl):
         self.body = body
+        self.symb_tbl = symb_tbl
 
 class Condition(AST):
     def __init__(self, expr):
@@ -46,18 +48,20 @@ class Condition(AST):
 
 
 class While(AST):
-    def __init__(self, cond, body, option):
+    def __init__(self, cond, body, option, symb_tbl):
         self.cond = cond
         self.body = body
         self.option = option
+        self.symb_tbl = symb_tbl
 
 
 class Loop(AST):
-    def __init__(self, expr, body, variable=None, cond=None):
+    def __init__(self, expr, body, symb_tbl, variable=None, cond=None):
         self.variable = variable
         self.cond = cond
         self.expr = expr
         self.body = body
+        self.symb_tbl = symb_tbl
 
     #The types of "loop"
     #returns 0: loop expr COLON body ENDLOOP
@@ -117,9 +121,10 @@ class Procedure:
 
 # Represents a call to a procedure
 class Activation:
-    def __init__(self, id, args):
+    def __init__(self, id, args, symb_tbl):
         self.id = id
         self.args = args
+        self.symb_tbl = symb_tbl
 
 
 class Count:
@@ -130,4 +135,33 @@ class Count:
 class Append:
     def __init__(self, collection, val):
         self.collection = collection
+        self.val = val
+
+
+class Return:
+    def __init__(self, val):
+        self.val = val
+
+
+class Var(AST):
+    def __init__(self, token):
+        self.token = token
+
+class Assign(AST):
+    def __init__(self, left, op, right):
+        self.left = left
+        self.op = op
+        self.right = right
+
+class VarDeclare(AST):
+    def __init__(self, node):
+        self.node = node
+
+class NotInitialized:
+    def __init__(self, node):
+        self.node = node
+
+
+class MustReturn:
+    def __init__(self, val):
         self.val = val
