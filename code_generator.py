@@ -71,7 +71,7 @@ class CSharp(ICodeGenerator):
         var_arg = node.variable
         var = self.gen_var_declaration(var_arg) if isinstance(var_arg, VarDeclare) else self.gen_var_assign(var_arg)
         cond = self.gen_expr(node.cond, "")
-        expr = self.gen_var_assign(node.expr)
+        expr = self.gen_var_assign(node.expr).replace(';', '')
         body = self.gen_stmts(node.body.stmts)
         return f"for ({var} {cond}; {expr})\n{{{body}}}"
 

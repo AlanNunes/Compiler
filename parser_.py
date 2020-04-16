@@ -413,7 +413,8 @@ class Parser:
             # TODO: Throw an exception
             return
         self.advance()
-        return Activation(id=id, args=args)
+        symb_tbl = SymbolTable(parent=self.current_symb_tbl)
+        return Activation(id=id, args=args, symb_tbl=symb_tbl)
 
     def parseReturn(self):
         self.advance()

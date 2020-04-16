@@ -5,12 +5,13 @@ import uuid
 from parser_ import Parser
 from runtime.interpreter import Interpreter
 from code_generator import CSharp
+from ast import AST
 
 # =======================================================
 # = Source Code                                         =
 # =======================================================
 #f=open(sys.argv[1], "r")
-f=open("tests/while.an", "r")
+f=open("tests/loop.an", "r")
 if f.mode == 'r':
     contents = f.read()
     tokens = lexer.run(contents)
@@ -39,5 +40,7 @@ if f.mode == 'r':
     if not parser.error:
         print("***Runtime execution***")
         interpreter = Interpreter(None)
-        result = interpreter.visit(ast)
-        print(result)
+        interpreter.visit(ast)
+
+    ast2 = AST(ast)
+    ast2.print()
