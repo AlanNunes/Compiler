@@ -48,10 +48,9 @@ class Condition(AST):
 
 
 class While(AST):
-    def __init__(self, cond, body, option, symb_tbl):
+    def __init__(self, cond, body, symb_tbl):
         self.cond = cond
         self.body = body
-        self.option = option
         self.symb_tbl = symb_tbl
 
 

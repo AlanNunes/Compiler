@@ -71,8 +71,10 @@ class Parser:
         elif self.current_token.type == T_COUNT:
             return self.parseBuiltInProcedures()
         else:
+            self.error = True
             SyntaxError(self.current_token.pos,
                         f"Expected a value or expression, but found '{self.current_token}'").raiseError()
+            self.advance()
 
     def parseExpr(self):
         fac1 = self.parseTerm()
@@ -195,6 +197,7 @@ class Parser:
         self.advance()
         cond = self.parseExpr()
         if not self.current_token.type == T_COLON:
+            self.error = True
             SyntaxError(pos=self.current_token.pos, detail=f"Expected a ':' but found {self.current_token}").raiseError()
         self.advance()
         stmt = Statement([])
@@ -203,22 +206,23 @@ class Parser:
         while_symbTbl = SymbolTable(parent=parentSymbTbl)
         self.current_symb_tbl = while_symbTbl
         # Finish symbol table creation
-        while self.current_token.type not in (T_ENDWHILE, T_ELSEWHILE, T_EOF):
+        while self.current_token.type not in (T_ENDWHILE, T_EOF):
             stmt.add(self.parseStatement())
         body = stmt
-        option = None
-        if self.current_token.type == T_ELSEWHILE:
-            option = self.parseWhile()
+        if self.current_token.type != T_ENDWHILE:
+            self.error = True
+            return SyntaxError(pos=self.current_token.pos, detail=f"Expected a 'endwhile' but found '{self.current_token}'").raiseError()
         self.advance()
         # Put back the parent symbol table as current
         self.current_symb_tbl = parentSymbTbl
-        return While(cond=cond, body=body, option=option, symb_tbl=while_symbTbl)
+        return While(cond=cond, body=body, symb_tbl=while_symbTbl)
 
     def parseIf(self):
         self.advance()
         cond = self.parseExpr()
         if not self.current_token.type == T_COLON:
-            SyntaxError(pos=self.current_token.pos, detail=f"Expected a ':' but found {self.current_token}").raiseError()
+            self.error = True
+            return SyntaxError(pos=self.current_token.pos, detail=f"Expected a ':' but found {self.current_token}").raiseError()
         self.advance()
         t = self.current_token
         stmt = Statement([])
@@ -227,7 +231,7 @@ class Parser:
         if_symbTbl = SymbolTable(parent=parentSymbTbl)
         self.current_symb_tbl = if_symbTbl
         # Finish symbol table creation
-        while self.current_token.type not in (T_ENDIF, T_ELSEIF, T_ELSE, T_EOF):
+        while self.current_token.type not in (T_ENDIF, T_ELSEIF, T_ELSE, T_ENDWHILE, T_ENDLOOP, T_EOF):
             stmt.add(self.parseStatement())
         body = stmt
         option = None
@@ -240,13 +244,14 @@ class Parser:
         elif self.current_token.type == T_ELSE:
             option = self.parseElse()
         else:
-            SyntaxError(pos=self.current_token.pos, detail=f"Expected a 'endif', 'elseif', 'else' but found {self.current_token}").raiseError()
+            self.error = True
+            return SyntaxError(pos=self.current_token.pos, detail=f"Expected a 'endif', 'elseif', 'else' but found {self.current_token}").raiseError()
         return If(cond=cond, body=body, option=option, symb_tbl=if_symbTbl)
 
     def parseElse(self):
         self.advance()
         if not self.current_token.type == T_COLON:
-            SyntaxError(pos=self.current_token.pos, detail=f"Expected a ':' but found {self.current_token}").raiseError()
+            return SyntaxError(pos=self.current_token.pos, detail=f"Expected a ':' but found {self.current_token}").raiseError()
         self.advance()
         stmt = Statement([])
         # Create symbol table for while and set it as current
@@ -258,7 +263,8 @@ class Parser:
             stmt.add(self.parseStatement())
         body = stmt
         if self.current_token.type != T_ENDIF:
-            SyntaxError(pos=self.current_token.pos, detail=f"Expected a 'endif' but found {self.current_token}").raiseError()
+            self.error = True
+            return SyntaxError(pos=self.current_token.pos, detail=f"Expected a 'endif' but found {self.current_token}").raiseError()
         self.advance()
         # Put back the parent symbol table as current
         self.current_symb_tbl = parentSymbTbl
@@ -289,8 +295,8 @@ class Parser:
         if isDeclare:
             res = self.current_symb_tbl.insert(id=left.token.value, type=type, val=assignNode.right)
             if not res:
-                NotUniqueSymbol(pos=left.token.pos).raiseError()
                 self.error = True
+                return NotUniqueSymbol(pos=left.token.pos).raiseError()
             node = VarDeclare(assignNode)
             return node
         #res = self.current_symb_tbl.update(id=left.token.value, val=assignNode.right, type=type)
@@ -302,8 +308,8 @@ class Parser:
     def variable(self):
         # TODO: Check if the var exists in the symbol table, if else thorw a compiler error
         if not self.current_symb_tbl.lookup(self.current_token.value):
-            NotFoundSymbol(pos=self.current_token.pos).raiseError()
             self.error = True
+            return NotFoundSymbol(pos=self.current_token.pos).raiseError()
         node = Var(self.current_token)
         self.advance()
         return node

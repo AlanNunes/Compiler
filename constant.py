@@ -22,7 +22,6 @@ T_ELSEIF = 'T_ELSEIF'
 T_ENDIF = 'T_ENDIF'
 T_WHILE = 'T_WHILE'
 T_ENDWHILE = 'T_ENDWHILE'
-T_ELSEWHILE = 'T_ELSEWHILE'
 T_LOOP = 'T_LOOP'
 T_ENDLOOP = 'T_ENDLOOP'
 # Greater Than
@@ -55,7 +54,7 @@ T_ENDFUN = 'T_ENDFUN'
 T_RETURN = 'T_RETURN'
 
 
-keywords = [{'declare': T_DECLARE}, {'if': T_IF}, {'else': T_ELSE}, {'elseif': T_ELSEIF}, {'endif': T_ENDIF}, {'and': T_AND}, {'or': T_OR}, {'==': T_EQUALITY}, {'while': T_WHILE}, {'endwhile': T_ENDWHILE}, {'elsewhile': T_ELSEWHILE}, {'loop': T_LOOP}, {'endloop': T_ENDLOOP}, {'print': T_PRINT}, {'count': T_COUNT}, {'append': T_APPEND}, {'function': T_FUNCTION}, {'endfunction': T_ENDFUN}, {'return': T_RETURN}]
+keywords = [{'declare': T_DECLARE}, {'if': T_IF}, {'else': T_ELSE}, {'elseif': T_ELSEIF}, {'endif': T_ENDIF}, {'and': T_AND}, {'or': T_OR}, {'==': T_EQUALITY}, {'while': T_WHILE}, {'endwhile': T_ENDWHILE}, {'loop': T_LOOP}, {'endloop': T_ENDLOOP}, {'print': T_PRINT}, {'count': T_COUNT}, {'append': T_APPEND}, {'function': T_FUNCTION}, {'endfunction': T_ENDFUN}, {'return': T_RETURN}]
 letters = string.ascii_letters
 
 operators = (T_PLUS, T_MINUS, T_MUL, T_DIV, T_POW)

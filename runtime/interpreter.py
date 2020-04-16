@@ -184,8 +184,6 @@ class Interpreter(NodeVisitor):
         while self.visit(node.cond) == 1:
             rtn = self.visit(node.body)
         self.current_symbTbl = current_parent
-        if node.option is not None:
-            return self.visit(node.option)
         return rtn
 
     def visit_loop(self, node):
