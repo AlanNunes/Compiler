@@ -1,23 +1,31 @@
 from constant import *
 
 class AST:
-    def __init__(self, nodes):
+    def __init__(self, nodes, symb_tbl=None):
         self.nodes = nodes
+        self.symb_tbl = symb_tbl
 
     def print(self):
+        print("="*80)
+        print("="*22 + "   Printing Abstract Syntax Tree   " + "="*23)
+        print("="*80)
+        print("\n")
         self.print_tree(self.nodes, 0)
 
     def print_tree(self, node, level, prefix_name=""):
-        prefix = "\t|" if level > 0 else ""
-        for i in range(level):
-            if i != level - 1:
-                prefix +="\t|"
-        if isinstance(node, int) or isinstance(node, float) or isinstance(node, str):
-            val = f"-{prefix_name} {str(node)}" if not isinstance(node, str) else f"-{prefix_name} '{node}'"
+        if not isinstance(node, BinOp) and not isinstance(node, Assign):
+            prefix = "      |" if level > 0 else ""
+            for i in range(level):
+                if i != level - 1:
+                    prefix +="______|"
+            if isinstance(node, int) or isinstance(node, float) or isinstance(node, str):
+                val = f"->{prefix_name} {node}" if not isinstance(node, str) else f"->{prefix_name} '{node}'"
+                print(prefix + val)
+                return
+            val = f"->{prefix_name} {node}"
+            print(prefix + val)
         else:
-            val = f"-{prefix_name} {node}"
-        print(prefix + val)
-        #print("|" + "\t"*level + f"|- {node.__class__.__name__}")
+            level -= 1
         if isinstance(node, Statement):
             for child in node.stmts:
                 self.print_tree(child, level + 1)
@@ -26,19 +34,19 @@ class AST:
             self.print_tree(node.op, level + 1)
             self.print_tree(node.right, level + 2)
         elif isinstance(node, Num):
-            self.print_tree(node.value, level + 1, " Value:")
+            self.print_tree(node.value, level + 1)
         elif isinstance(node, String):
-            self.print_tree(node.value, level + 1, " Value:")
+            self.print_tree(node.value, level + 1)
         elif isinstance(node, If):
-            self.print_tree(node.cond, level + 1)
-            self.print_tree(node.body, level + 1)
+            self.print_tree(node.cond, level)
+            self.print_tree(node.body, level)
             if node.option:
                 self.print_tree(node.option, level + 1)
         elif isinstance(node, Else):
             self.print_tree(node.body, level + 1)
         elif isinstance(node, While):
-            self.print_tree(node.cond, level + 1)
-            self.print_tree(node.body, level + 1)
+            self.print_tree(node.cond, level)
+            self.print_tree(node.body, level)
         elif isinstance(node, Condition):
             self.print_tree(node.expr, level + 1)
         elif isinstance(node, VarDeclare):
@@ -51,28 +59,37 @@ class AST:
             self.print_tree(node.right, level + 2)
         elif isinstance(node, Loop):
             if node.variable:
-                self.print_tree(node.variable, level + 1)
+                self.print_tree(node.variable, level)
             if node.cond:
-                self.print_tree(node.cond.left, level + 2)
-                self.print_tree(node.cond.op, level + 1)
-                self.print_tree(node.cond.right, level + 2)
-            self.print_tree(node.expr.left, level + 2)
-            self.print_tree(node.expr.op, level + 1)
-            self.print_tree(node.expr.right, level + 2)
-            self.print_tree(node.body, level + 1)
+                self.print_tree(node.cond.left, level + 1)
+                self.print_tree(node.cond.op, level)
+                self.print_tree(node.cond.right, level + 1)
+            self.print_tree(node.expr.left, level + 1)
+            self.print_tree(node.expr.op, level)
+            self.print_tree(node.expr.right, level + 1)
+            self.print_tree(node.body, level)
         elif isinstance(node, Procedure):
-            self.print_tree(node.identifier, level + 1)
+            self.print_tree(node.identifier, level + 1, " Id:")
             for child in node.args:
                 self.print_tree(child, level + 1, " Arg:")
             self.print_tree(node.body, level + 1)
         elif isinstance(node, Return):
             self.print_tree(node.val, level + 1)
         elif isinstance(node, Activation):
+            self.print_tree(node.id, level + 1, " Id:")
             for child in node.args:
                 self.print_tree(child, level + 1, " Arg:")
         elif isinstance(node, Token):
             if node.value:
                 self.print_tree(node.value, level + 1)
+        elif isinstance(node, Print):
+            self.print_tree(node.val, level + 1)
+        elif isinstance(node, Var):
+            if not self.symb_tbl:
+                return
+            res = self.symb_tbl.lookup(node.token.value)
+            if res[1]:
+                self.print_tree(res[0], level + 1)
             
 
 class Token:
@@ -85,25 +102,25 @@ class Token:
         if self.value:
             return f'{self.value}'
         elif self.type == T_EQ:
-            return "(=)"
+            return "="
         elif self.type == T_GT:
-            return "(>)"
+            return ">"
         elif self.type == T_LT:
-            return "(<)"
+            return "<"
         elif self.type == T_GTEQ:
-            return "(>=)"
+            return ">="
         elif self.type == T_LTEQ:
-            return "(<=)"
+            return "<="
         elif self.type == T_EQUALITY:
-            return "(==)"
+            return "=="
         elif self.type == T_PLUS:
-            return "(+)"
+            return "+"
         elif self.type == T_MINUS:
-            return "(-)"
+            return "-"
         elif self.type == T_MUL:
-            return "(*)"
+            return "*"
         elif self.type == T_DIV:
-            return "(/)"
+            return "/"
         else:
             return self.__class__.__name__
 
@@ -132,7 +149,8 @@ class BinOp(Node):
 
 
 class Num(Node):
-    pass
+    def __repr__(self):
+        return self.__class__.__name__
 
 
 class String(Node):
@@ -271,7 +289,7 @@ class Procedure:
         self.body = body
 
     def __repr__(self):
-        return f"Procedure ({self.identifier.value})"
+        return self.__class__.__name__
 
 
 # Represents a call to a procedure
@@ -282,7 +300,7 @@ class Activation:
         self.symb_tbl = symb_tbl
 
     def __repr__(self):
-        return f"Activation ({self.id.value})"
+        return self.__class__.__name__
 
 
 class Count:
@@ -315,7 +333,7 @@ class Var(Node):
         self.token = token
 
     def __repr__(self):
-        return f"({self.token.value})"
+        return f"{self.token.value}"
 
 class Assign(Node):
     def __init__(self, left, op, right):
@@ -324,7 +342,7 @@ class Assign(Node):
         self.right = right
 
     def __repr__(self):
-        return "(=)"
+        return "="
 
 class VarDeclare(Node):
     def __init__(self, node):
