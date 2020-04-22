@@ -8,6 +8,9 @@ class ICodeGenerator:
         self.output = ""
         self.current_symb_tbl = symb_tbl
 
+    def gen_while(self, node):
+        pass
+
     def gen_else(self, node):
         pass
 
@@ -53,6 +56,11 @@ class CSharp(ICodeGenerator):
             res = self.gen_stmt(stmt)
             statements += f"{res}\n"
         return statements
+
+    def gen_while(self, node):
+        cond = self.gen_expr(node.cond, "")
+        body = self.gen_stmts(node.body.stmts)
+        return f"while ({cond})\n{{{body}}}"
 
     def gen_loop_type1(self, node):
         expr = self.gen_expr(node.expr, "")
@@ -102,6 +110,8 @@ class CSharp(ICodeGenerator):
             return self.gen_print(node)
         elif isinstance(node, Loop):
             return self.gen_loop(node)
+        elif isinstance(node, While):
+            return self.gen_while(node)
         else:
             return # NOT IMPLEMENTED
 
