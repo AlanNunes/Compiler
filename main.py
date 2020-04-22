@@ -41,7 +41,7 @@ if f.mode == 'r':
     print("Time execution: " + str(end - start) + "ms")
 
     # =======================================================
-    # =          CSharp Code Generation                     =
+    # =      CSharp Code Generation And Compiltaion         =
     # =======================================================
     if not parser.error:
         msgs_log.print_title("Doing Code Generator (C#)")
@@ -54,10 +54,23 @@ if f.mode == 'r':
         obj_f = open(f_name,"w+")
         obj_f.write(res)
         obj_f.close()
-        os.system(f"\"{os.environ['CSharpComp']}/csc\" \"{os.getcwd()}\{f_name}\"")
         end = time.time()
         print(f"*Output: '{f_name}'")
         print("Time execution: " + str(end - start) + "ms")
+
+
+    # =======================================================
+    # =               CSharp Compiltation                   =
+    # =======================================================
+    msgs_log.print_title("Doing CSharp Compilation")
+    start = time.time()
+    csc = os.environ['CSharpComp']
+    out = os.path.splitext(f_name)[0]
+    os.system(f'{csc}/csc -optimize -out:{out}.exe \"{os.getcwd()}\{f_name}\"')
+    end = time.time()
+    print(f"*Output: '{out}.exe'")
+    print("Time execution: " + str(end - start) + "ms")
+
 
     # =======================================================
     # =                 Runtime Execution                   =
