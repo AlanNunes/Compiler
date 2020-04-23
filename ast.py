@@ -283,10 +283,11 @@ class CollectionAssign:
 
 
 class Procedure:
-    def __init__(self, identifier, args, body):
+    def __init__(self, identifier, args, body, isVoid=True):
         self.identifier = identifier
         self.args = args
         self.body = body
+        self.isVoid = isVoid
 
     def __repr__(self):
         return self.__class__.__name__

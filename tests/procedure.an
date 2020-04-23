@@ -1,5 +1,4 @@
 function speak(x):
 	print x
 endfunction
-
-speak("hello world")
+speak("Hello World")

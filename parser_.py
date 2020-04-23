@@ -284,6 +284,7 @@ class Parser:
             if self.getNextToken().type == T_STRING:
                 self.advance()
                 right = String(self.current_token)
+                self.advance()
             elif self.getNextToken().type == T_L_BRACKET:
                 self.advance()
                 self.advance()
@@ -396,10 +397,13 @@ class Parser:
             return
         self.advance()
         stmts = Statement([])
+        isVoid = True
         while self.current_token.type != T_ENDFUN:
+            if self.current_token.type == T_RETURN:
+                isVoid = False
             stmts.add(self.parseStatement())
         self.advance()
-        return Procedure(identifier=id, args=args, body=stmts)
+        return Procedure(identifier=id, args=args, body=stmts, isVoid=isVoid)
 
     def parseActivation(self):
         id = self.current_token
