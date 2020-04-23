@@ -43,6 +43,7 @@ namespace an
 ```
 
 # Abstract Syntax Tree (AST)
+**You can view AST while compiling**
 ```
 -> Statements
       |-> Loop
@@ -150,7 +151,9 @@ endloop
 **Output**
 ![Loop3](https://i.imgur.com/Iy4vvg2.png)
 
-# Contact
+# Author
+## Alan Nunes da Silva
+### "Computer Enthusiast just for fun"
 E-mail: [alann.625@gmail.com](mailto:alann.625@gmail.com)\
 Linkedin: [Alan Nunes](https://www.linkedin.com/in/alan-nunes-848374152)
 
