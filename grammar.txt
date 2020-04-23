@@ -8,7 +8,6 @@ loop        : loop variable SEMICOLON cond SEMICOLON expr COLON body ENDLOOP
             : loop variable SEMICOLON expr COLON body ENDLOOP
             : loop expr COLON body ENDLOOP
 while       : while cond body endwhile
-            : while cond body elsewhile cond body endwhile
 if          : if cond COLON body ENDIF
 body        : statements
 statement   : variable|if|expr

@@ -1,274 +1,8 @@
 from constant import *
 from error import *
 from ast import *
-import symbolTable
-
-class NodeVisitor(object):
-    def visit(self, node):
-        if isinstance(node, BinOp):
-            return self.visit_BinOp(node)
-        elif isinstance(node, Num):
-            return self.visit_Num(node)
-        elif isinstance(node, Assign) or isinstance(node, VarDeclare):
-            return self.visit_assign(node)
-        elif isinstance(node, Var):
-            return self.visit_var(node)
-        elif isinstance(node, String):
-            return self.visit_String(node)
-        elif isinstance(node, Statement):
-            return self.visit_statement(node)
-        elif isinstance(node, If):
-            return self.visit_if(node)
-        elif isinstance(node, Else):
-            return self.visit_else(node)
-        elif isinstance(node, While):
-            return self.visit_while(node)
-        elif isinstance(node, Loop):
-            return self.visit_loop(node)
-        elif isinstance(node, Print):
-            return self.visit_print(node)
-        elif isinstance(node, Collection):
-            return self.visit_collection(node)
-        elif isinstance(node, Index):
-            return self.visit_index(node)
-        elif isinstance(node, CollectionAccess):
-            return self.visit_collectionAccess(node)
-        elif isinstance(node, Count):
-            return self.visit_count(node)
-        elif isinstance(node, Append):
-            return self.visit_append(node)
-        elif isinstance(node, CollectionAssign):
-            return self.visist_collAssign(node)
-        else:
-            return
-
-
-class Interpreter(NodeVisitor):
-    def __init__(self, parser):
-        self.parser = parser
-        self.symb_table = symbolTable.SymbolTable()
-
-    def visit_BinOp(self, node):
-        if node.op.type == T_PLUS:
-            left = self.visit(node.left)
-            right = self.visit(node.right)
-            if isinstance(left, str) or isinstance(right, str):
-                return str(self.visit(node.left)) + str(self.visit(node.right))
-            return self.visit(node.left) + self.visit(node.right)
-        elif node.op.type == T_MINUS:
-            left = self.visit(node.left)
-            right = self.visit(node.right)
-            if isinstance(left, str) and isinstance(right, str):
-                return left.replace(right, "")
-            return left - right
-        elif node.op.type == T_MUL:
-            return self.visit(node.left) * self.visit(node.right)
-        elif node.op.type == T_DIV:
-            right = self.visit(node.right)
-            if right == 0: DividedByZeroError(node.right.token.pos).raiseError()
-            return self.visit(node.left) / right
-        elif node.op.type == T_POW:
-            return self.visit(node.left) ** self.visit(node.right)
-        elif node.op.type in (T_GT, T_LT, T_GTEQ, T_LTEQ):
-            return self.visit_arith_expr(node)
-        elif node.op.type in (T_AND, T_OR, T_EQUALITY):
-            return self.visist_comp_expr(node)
-
-    def visit_Num(self, node):
-        return node.value
-
-    def visit_String(self, node):
-        return node.value
-
-    def visit_assign(self, node):
-        isDeclare = False
-        if isinstance(node, VarDeclare):
-            node = node.node
-            isDeclare = True
-        left = node.left.token
-        right = self.visit(node.right)
-        if isinstance(right, float) and not (right).is_integer():
-            type = T_FLOAT
-        elif isDeclare and not right and right != 0:
-            type = T_NOT_INITIALIZED
-            right = None
-        elif isinstance(right, str):
-            type = T_STRING
-        elif isinstance(right, int):
-            type = T_INT
-            right = int(right)
-        else:
-            type = T_COLLECTION
-            right = right
-        if isDeclare:
-            self.symb_table.insert(id=left.value, type=type, val=right, pos=node.left.token.pos)
-        else:
-            self.symb_table.update(id=left.value, type=type, val=right, pos=node.left.token.pos)
-        return right
-
-    def visit_var(self, node):
-        return self.symb_table.getValue(node.token)
-
-    def visit_arith_expr(self, node):
-        left = self.visit(node.left)
-        right = self.visit(node.right)
-        t = node.op.type
-        if t == T_GT:
-            return 1 if (left > right) else 0
-        elif t == T_LT:
-            return 1 if (left < right) else 0
-        elif t == T_GTEQ:
-            return 1 if (left >= right) else 0
-        elif t == T_LTEQ:
-            return 1 if (left <= right) else 0
-
-    def visist_comp_expr(self, node):
-        left = self.visit(node.left)
-        right = self.visit(node.right)
-        # if the values are not empty strings, convert it to 1
-        if isinstance(left, str) and not str(left):
-            left = 0
-        if isinstance(right, str) and not str(right):
-            right = 0
-        t = node.op.type
-        if t == T_AND:
-            return 1 if (left != 0 and right != 0) else 0
-        elif t == T_OR:
-            return 1 if (left != 0 or right != 0) else 0
-        elif t == T_EQUALITY:
-            return 1 if (left == right) else 0
-
-    def visit_statement(self, node):
-        rtn = None
-        for stmt in node.stmts:
-            rtn = self.visit(stmt)
-        return rtn
-
-    def visit_if(self, node):
-        cond = self.visit(node.cond)
-        if cond == 1:
-            return self.visit(node.body)
-        if node.option == None:
-            return
-        if isinstance(node.option, If):
-            return self.visit_if(node.option)
-        elif isinstance(node.option, Else):
-            return self.visit(node.option)
-        return
-
-    def visit_while(self, node):
-        rtn = None
-        while self.visit(node.cond) == 1:
-            rtn = self.visit(node.body)
-        if node.option is not None:
-            return self.visit(node.option)
-        return rtn
-
-    def visit_loop(self, node):
-        rtn = None
-        lType = node.getType()
-        if lType == 0:
-            count = self.visit(node.expr)
-            i = 0
-            while i != abs(count):
-                rtn = self.visit(node.body)
-                i += 1
-        elif lType == 1:
-            count = self.visit(node.expr)
-            i = self.visit(node.variable)
-            while i != count:
-                rtn = self.visit(node.body)
-                i += 1
-                if isinstance(node.variable, VarDeclare):
-                    var = node.variable.node
-                    self.symb_table.update(var.left.token.value, i, var.left.token.pos)
-                else:
-                    var = node.variable if node.variable.token.type == T_IDENTIFIER else node.variable.left
-                    self.symb_table.update(var.token.value, i, var.token.pos)
-        else:
-            var = node.variable.node
-            self.symb_table.insert(id=var.left.token.value, type=var.right.token.type, val=var.right.token.value, pos=var.right.token.pos)
-            while self.visit(node.cond) == 1:
-                rtn = self.visit(node.body)
-                res = self.visit(node.expr)
-                self.symb_table.update(id=var.left.token.value, val=res, pos=var.right.token.pos)
-        return rtn
-
-    def visit_print(self, node):
-        rtn = self.visit(node.val)
-        print(rtn)
-        return rtn
-
-    def visit_else(self, node):
-        return self.visit(node.body)
-
-
-    def visit_collectionAccess(self, node):
-        indexes = []
-        value = self.symb_table.getValue(node.identifier)
-        for i in node.index:
-            indexes.append(self.visit(i))
-        for i in indexes:
-            v = value[i]
-        return v
-
-    def visit_index(self, node):
-        return self.visit(node.v)
-
-    def visit_collection(self, node):
-        v = []
-        for i in node.elements:
-            v.append(self.visit(i))
-        return v
-
-    def visit_count(self, node):
-        val = self.visit(node.obj)
-        if not isinstance(val, list):
-            return
-        return len(val)
-
-    def visit_append(self, node):
-        identifier = node.collection.token
-        value = self.symb_table.getValue(identifier)
-        value.append(self.visit(node.val))
-        self.symb_table.update(identifier.value, value, pos=identifier.pos)
-        return value
-
-    def visist_collAssign(self, node):
-        coll = self.symb_table.getValue(node.collAccess.identifier)
-        indexes = []
-        value = self.symb_table.getValue(node.collAccess.identifier)
-        last = None
-        for i in node.collAccess.index:
-            indexes.append(self.visit(i))
-        iLen = len(indexes)
-        for i in range(iLen):
-            idx = indexes[i]
-            v = value[idx]
-            if i + 1 == iLen:
-                last = value[i]
-            vArg = v
-        last = value
-        return teste
-
-
-class Var(AST):
-    def __init__(self, token):
-        self.token = token
-
-class Assign(AST):
-    def __init__(self, left, op, right):
-        self.left = left
-        self.op = op
-        self.right = right
-
-class VarDeclare(AST):
-    def __init__(self, node):
-        self.node = node
-
-class NotInitialized:
-    def __init__(self, node):
-        self.node = node
+from symbol_table import *
+from interpreter import Interpreter, NodeVisitor
 
 
 class Parser:
@@ -276,6 +10,8 @@ class Parser:
         self.tokens = tokens
         self.tok_idx = -1
         self.advance()
+        self.current_symb_tbl = SymbolTable("global")
+        self.error = False
 
     def parse(self):
         stmts = Statement([])
@@ -320,6 +56,9 @@ class Parser:
             self.advance()
             return t
         elif self.current_token.type in (T_DECLARE, T_IDENTIFIER):
+            if self.getNextToken() and self.getNextToken().type == T_LPARAN:
+                node = self.parseActivation()
+                return node
             node = self.variable()
             return node
         elif self.current_token.type == T_EQ:
@@ -332,8 +71,10 @@ class Parser:
         elif self.current_token.type == T_COUNT:
             return self.parseBuiltInProcedures()
         else:
+            self.error = True
             SyntaxError(self.current_token.pos,
                         f"Expected a value or expression, but found '{self.current_token}'").raiseError()
+            self.advance()
 
     def parseExpr(self):
         fac1 = self.parseTerm()
@@ -376,6 +117,12 @@ class Parser:
             return self.parseCollectionAccess()
         elif self.current_token.type in builtInProc:
             return self.parseBuiltInProcedures()
+        elif self.current_token.type == T_FUNCTION:
+            return self.parseFunction()
+        elif self.current_token.type == T_IDENTIFIER and self.getNextToken() and self.getNextToken().type == T_LPARAN:
+            return self.parseActivation()
+        elif self.current_token.type == T_RETURN:
+            return self.parseReturn()
         return self.parseExpr()
 
 
@@ -385,6 +132,11 @@ class Parser:
 
     def parseLoop(self):
         self.advance()
+        # Create symbol table for while and set it as current
+        parentSymbTbl = self.current_symb_tbl
+        loop_symbTbl = SymbolTable(parent=parentSymbTbl)
+        self.current_symb_tbl = loop_symbTbl
+        # Finish symbol table creation
         var = None
         expr = None
         stmt = self.parseStatement()
@@ -409,7 +161,9 @@ class Parser:
                         stmt.add(self.parseStatement())
                     body = stmt
                     self.advance()
-                    return Loop(variable=var, cond=cond, expr=expr, body=body)
+                    # Put back the parent symbol table as current
+                    self.current_symb_tbl = parentSymbTbl
+                    return Loop(variable=var, cond=cond, expr=expr, body=body, symb_tbl=loop_symbTbl)
                 expr = stmt
                 if self.current_token.type != T_COLON:
                     SyntaxError(pos=self.current_token.pos, detail=f"Expected a ':' but found {self.current_token}").raiseError()
@@ -419,7 +173,9 @@ class Parser:
                     stmt.add(self.parseStatement())
                 body = stmt
                 self.advance()
-                return Loop(variable=var, expr=expr, body=body)
+                # Put back the parent symbol table as current
+                self.current_symb_tbl = parentSymbTbl
+                return Loop(variable=var, expr=expr, body=body, symb_tbl=loop_symbTbl)
         elif isinstance(stmt, BinOp) or isinstance(stmt, Num):
             expr = stmt
             if self.current_token.type != T_COLON:
@@ -430,7 +186,9 @@ class Parser:
                 stmt.add(self.parseStatement())
             body = stmt
             self.advance()
-            return Loop(expr=expr, body=body)
+            # Put back the parent symbol table as current
+            self.current_symb_tbl = parentSymbTbl
+            return Loop(expr=expr, body=body, symb_tbl=loop_symbTbl)
         else:
             SyntaxError(pos=self.current_token.pos, detail=f"Expected an expression or variable, but found '{self.current_token}'").raiseError()
 
@@ -439,30 +197,46 @@ class Parser:
         self.advance()
         cond = self.parseExpr()
         if not self.current_token.type == T_COLON:
+            self.error = True
             SyntaxError(pos=self.current_token.pos, detail=f"Expected a ':' but found {self.current_token}").raiseError()
         self.advance()
         stmt = Statement([])
-        while self.current_token.type not in (T_ENDWHILE, T_ELSEWHILE, T_EOF):
+        # Create symbol table for while and set it as current
+        parentSymbTbl = self.current_symb_tbl
+        while_symbTbl = SymbolTable(parent=parentSymbTbl)
+        self.current_symb_tbl = while_symbTbl
+        # Finish symbol table creation
+        while self.current_token.type not in (T_ENDWHILE, T_EOF):
             stmt.add(self.parseStatement())
         body = stmt
-        option = None
-        if self.current_token.type == T_ELSEWHILE:
-            option = self.parseWhile()
+        if self.current_token.type != T_ENDWHILE:
+            self.error = True
+            return SyntaxError(pos=self.current_token.pos, detail=f"Expected a 'endwhile' but found '{self.current_token}'").raiseError()
         self.advance()
-        return While(cond=cond, body=body, option=option)
+        # Put back the parent symbol table as current
+        self.current_symb_tbl = parentSymbTbl
+        return While(cond=cond, body=body, symb_tbl=while_symbTbl)
 
     def parseIf(self):
         self.advance()
         cond = self.parseExpr()
         if not self.current_token.type == T_COLON:
-            SyntaxError(pos=self.current_token.pos, detail=f"Expected a ':' but found {self.current_token}").raiseError()
+            self.error = True
+            return SyntaxError(pos=self.current_token.pos, detail=f"Expected a ':' but found {self.current_token}").raiseError()
         self.advance()
         t = self.current_token
         stmt = Statement([])
-        while self.current_token.type not in (T_ENDIF, T_ELSEIF, T_ELSE, T_EOF):
+        # Create symbol table for while and set it as current
+        parentSymbTbl = self.current_symb_tbl
+        if_symbTbl = SymbolTable(parent=parentSymbTbl)
+        self.current_symb_tbl = if_symbTbl
+        # Finish symbol table creation
+        while self.current_token.type not in (T_ENDIF, T_ELSEIF, T_ELSE, T_ENDWHILE, T_ENDLOOP, T_EOF):
             stmt.add(self.parseStatement())
         body = stmt
         option = None
+        # Put back the parent symbol table as current
+        self.current_symb_tbl = parentSymbTbl
         if self.current_token.type == T_ENDIF:
             self.advance()
         elif self.current_token.type == T_ELSEIF:
@@ -470,22 +244,31 @@ class Parser:
         elif self.current_token.type == T_ELSE:
             option = self.parseElse()
         else:
-            SyntaxError(pos=self.current_token.pos, detail=f"Expected a 'endif', 'elseif', 'else' but found {self.current_token}").raiseError()
-        return If(cond=cond, body=body, option=option)
+            self.error = True
+            return SyntaxError(pos=self.current_token.pos, detail=f"Expected a 'endif', 'elseif', 'else' but found {self.current_token}").raiseError()
+        return If(cond=cond, body=body, option=option, symb_tbl=if_symbTbl)
 
     def parseElse(self):
         self.advance()
         if not self.current_token.type == T_COLON:
-            SyntaxError(pos=self.current_token.pos, detail=f"Expected a ':' but found {self.current_token}").raiseError()
+            return SyntaxError(pos=self.current_token.pos, detail=f"Expected a ':' but found {self.current_token}").raiseError()
         self.advance()
         stmt = Statement([])
+        # Create symbol table for while and set it as current
+        parentSymbTbl = self.current_symb_tbl
+        else_symbTbl = SymbolTable(parent=parentSymbTbl)
+        self.current_symb_tbl = else_symbTbl
+        # Finish symbol table creation
         while self.current_token.type not in (T_ENDIF, T_EOF):
             stmt.add(self.parseStatement())
         body = stmt
         if self.current_token.type != T_ENDIF:
-            SyntaxError(pos=self.current_token.pos, detail=f"Expected a 'endif' but found {self.current_token}").raiseError()
+            self.error = True
+            return SyntaxError(pos=self.current_token.pos, detail=f"Expected a 'endif' but found {self.current_token}").raiseError()
         self.advance()
-        return Else(body)
+        # Put back the parent symbol table as current
+        self.current_symb_tbl = parentSymbTbl
+        return Else(body, symb_tbl=else_symbTbl)
 
     def parseAssignment(self):
         isDeclare = False
@@ -508,12 +291,25 @@ class Parser:
             else:
                 right = self.parseExpr()
             assignNode = Assign(left=left, op=token, right=right)
+        type = self.getVarType(assignNode.right, self.current_symb_tbl)
         if isDeclare:
+            res = self.current_symb_tbl.insert(id=left.token.value, type=type, val=assignNode.right)
+            if not res:
+                self.error = True
+                return NotUniqueSymbol(pos=left.token.pos).raiseError()
             node = VarDeclare(assignNode)
             return node
+        #res = self.current_symb_tbl.update(id=left.token.value, val=assignNode.right, type=type)
+        #if not res:
+        #    NotFoundSymbol(pos=left.token.pos).raiseError()
+        #    self.error = True
         return assignNode
 
     def variable(self):
+        # TODO: Check if the var exists in the symbol table, if else thorw a compiler error
+        if not self.current_symb_tbl.lookup(self.current_token.value):
+            self.error = True
+            return NotFoundSymbol(pos=self.current_token.pos).raiseError()
         node = Var(self.current_token)
         self.advance()
         return node
@@ -576,6 +372,55 @@ class Parser:
                 return TooManyArguments(pos=self.current_token.pos, detail=f"Too much arguments specified at procedure. 'Append' expected 2 arguments").raiseError()
             return Append(args[0], args[1])
 
+    def parseFunction(self):
+        self.advance()
+        if self.current_token.type != T_IDENTIFIER:
+            # TODO: Throw an exception
+            return
+        id = self.current_token
+        self.advance()
+        if self.current_token.type != T_LPARAN:
+            # TODO: Throw an exception
+            return
+        self.advance()
+        args = self.getArgs()
+        for v in args:
+            if v.token.type != T_IDENTIFIER:
+                return SyntaxError(pos=self.current_token.pos, detail=f"You can only use identifier in arguments of a function").raiseError()
+        if self.current_token.type != T_RPARAN:
+            # TODO: Throw an exception
+            return
+        self.advance()
+        if self.current_token.type != T_COLON:
+            # TODO: Throw an exception
+            return
+        self.advance()
+        stmts = Statement([])
+        while self.current_token.type != T_ENDFUN:
+            stmts.add(self.parseStatement())
+        self.advance()
+        return Procedure(identifier=id, args=args, body=stmts)
+
+    def parseActivation(self):
+        id = self.current_token
+        self.advance()
+        if self.current_token.type != T_LPARAN:
+            # TODO: Throw an exception
+            return
+        self.advance()
+        args = self.getArgs()
+        if self.current_token.type != T_RPARAN:
+            # TODO: Throw an exception
+            return
+        self.advance()
+        symb_tbl = SymbolTable(parent=self.current_symb_tbl)
+        return Activation(id=id, args=args, symb_tbl=symb_tbl)
+
+    def parseReturn(self):
+        self.advance()
+        rtn = self.parseExpr()
+        return Return(rtn)
+
     def getArgs(self):
         args = []
         while self.current_token.type != T_RPARAN:
@@ -583,3 +428,19 @@ class Parser:
             if self.current_token.type == T_COMMA:
                 self.advance()
         return args
+
+    def getVarType(self, node, symb_tbl):
+        val = Interpreter(NodeVisitor, symb_tbl).visit(node)
+        if isinstance(val, int):
+            return T_INT
+        elif isinstance(val, float):
+            return T_FLOAT
+        elif isinstance(val, str):
+            return T_STRING
+        elif isinstance(val, list):
+            return T_COLLECTION
+        elif val == None:
+            return T_NOT_INITIALIZED
+        else:
+            # TODO: compiler error
+            return
