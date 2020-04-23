@@ -5,21 +5,20 @@ import uuid
 import time
 import msgs_log
 import prepare_compiler
+import cl_args
 from parser_ import Parser
 from runtime.interpreter import Interpreter
 from code_generator import CSharp
 from ast import AST
 
-# =======================================================
-# =             Prepare Compiler Environment            =
-# =======================================================
+# Get command line arguments
+args = cl_args.get_args()
+
+# Prepare Compiler Environment
 prepare_compiler.load_csharp_environment()
 
-# =======================================================
-# =                    Source Code                      =
-# =======================================================
-#f=open(sys.argv[1], "r")
-f=open("tests/while.an", "r")
+# Open source code
+f=open(args.src, "r")
 if f.mode == 'r':
     # =======================================================
     # =                      Lexer                          =
@@ -29,7 +28,7 @@ if f.mode == 'r':
     contents = f.read()
     tokens = lexer.run(contents)
     end = time.time()
-    print("Time execution: " + str(end - start) + "ms")
+    print("Execution time: " + str(end - start) + "ms")
     # =======================================================
     # =                     Parser                          =
     # =======================================================
@@ -38,10 +37,10 @@ if f.mode == 'r':
     parser = Parser(tokens)
     ast = parser.parse()
     end = time.time()
-    print("Time execution: " + str(end - start) + "ms")
+    print("Execution time: " + str(end - start) + "ms")
 
     # =======================================================
-    # =      CSharp Code Generation And Compiltaion         =
+    # =                CSharp Code Generation               =
     # =======================================================
     if not parser.error:
         msgs_log.print_title("Doing Code Generator (C#)")
@@ -50,13 +49,17 @@ if f.mode == 'r':
         res = code_generator.gen_base_structure(ast.stmts)
         if not os.path.exists('obj'):
             os.makedirs('obj')
-        f_name = f"obj\output{uuid.uuid1()}.cs"
+        if args.dst:
+            f_name = f"{args.dst}.cs"
+        else:
+            f_name = os.path.basename(args.src)
+            f_name = f"{os.getcwd()}\obj\{f_name}.cs"
         obj_f = open(f_name,"w+")
         obj_f.write(res)
         obj_f.close()
         end = time.time()
         print(f"*Output: '{f_name}'")
-        print("Time execution: " + str(end - start) + "ms")
+        print("Execution time: " + str(end - start) + "ms")
 
 
     # =======================================================
@@ -65,23 +68,24 @@ if f.mode == 'r':
     msgs_log.print_title("Doing CSharp Compilation")
     start = time.time()
     csc = os.environ['CSharpComp']
-    out = os.path.splitext(f_name)[0]
-    os.system(f'{csc}/csc -optimize -out:{out}.exe \"{os.getcwd()}\{f_name}\"')
+    src = os.path.splitext(f_name)[0]
+    dst = args.dst if args.dst else f"{f_name}"
+    os.system(f'{csc}/csc -optimize -out:\"{dst}.exe\" \"{src}.cs\"')
     end = time.time()
-    print(f"*Output: '{out}.exe'")
-    print("Time execution: " + str(end - start) + "ms")
+    print(f"*Output: '{src}.exe'")
+    print("Execution time: " + str(end - start) + "ms")
 
 
     # =======================================================
-    # =                 Runtime Execution                   =
+    # =                 RunExecution time                   =
     # =======================================================
     if not parser.error:
         start = time.time()
-        msgs_log.print_title("Runtime execution")
+        msgs_log.print_title("RunExecution time")
         interpreter = Interpreter(None)
         interpreter.visit(ast)
         end = time.time()
-        print("Time execution: " + str(end - start) + "ms")
+        print("Execution time: " + str(end - start) + "ms")
 
     ast2 = AST(ast, parser.current_symb_tbl)
     ast2.print()
