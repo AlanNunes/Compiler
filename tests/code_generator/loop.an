@@ -1,0 +1,3 @@
+loop 100:
+	print "Hello World"
+endloop

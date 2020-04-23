@@ -2,18 +2,6 @@ from constant import *
 from ast import *
 
 
-class Token:
-    def __init__(self, type_, pos, value=None):
-        self.type = type_
-        self.value = value
-        self.pos = pos
-
-    def __repr__(self):
-        if self.value:
-            return f'{self.type}:{self.value}'
-        return f'{self.type}'
-
-
 class Lexer:
     def __init__(self, text):
         self.text = text
@@ -141,7 +129,8 @@ class Lexer:
         strVal = ''
         # consume '"'
         self.advance()
-        while self.current_char != None and self.current_char != "\"" and self.current_char in letters + ' ' + digits:
+        #while self.current_char != None and self.current_char != "\"" and self.current_char in letters + ' ' + digits:
+        while self.current_char != None and self.current_char != "\"":
             strVal += str(self.current_char)
             self.advance()
         self.advance()
