@@ -4,7 +4,7 @@ It's the first compiler I write. I am building a new own programming language.
 |                      | Variables | If/ElseIf/Else | Loop  | Function | Recursion |
 | -------------------- |:---------:|:--------------:|:-----:|:--------:|:---------:|
 | Runtime      	       | ✔         | ✔             | ✔     | ✔       | ✔	 |
-| Code Generation      | ✔         | ✔             | ✔     | ❌      | ❌	       |
+| Code Generation      | ✔         | ✔             | ✔     | ✔       | ✔	 |
 
 # Grammar
 [See the grammar here](grammar.txt)
