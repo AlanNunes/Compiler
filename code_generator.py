@@ -8,7 +8,16 @@ class ICodeGenerator:
         self.output = ""
         self.current_symb_tbl = symb_tbl
 
-    def gen_function(self, node):
+    def gen_activation_args(self, node):
+        pass
+
+    def gen_procedure_args(self, node):
+        pass
+
+    def gen_procedure(self, node):
+        pass
+
+    def gen_activation(self, node):
         pass
 
     def gen_while(self, node):
@@ -46,11 +55,14 @@ class CSharp(ICodeGenerator):
 
     def gen_base_structure(self, stmts):
         stmts_out = self.gen_stmts(stmts)
+        functions = self.gen_procedures(stmts)
         output = "namespace an\n{"
-        output += "\nclass Program\n{"
-        output += "\nstatic void Main()\n{"
+        output += "\npublic class Program\n{"
+        output += "\npublic static void Main()\n{"
         output += f"\n{stmts_out}"
-        output += "\n}\n}\n}"
+        output += "\n}"
+        output += f"{functions}"
+        output += "\n}\n}"
         return output
 
     def gen_stmts(self, stmts):
@@ -59,6 +71,45 @@ class CSharp(ICodeGenerator):
             res = self.gen_stmt(stmt)
             statements += f"{res}\n"
         return statements
+
+    def gen_procedures(self, node):
+        procs = ""
+        for p in node:
+            if isinstance(p, Procedure):
+                procs += self.gen_procedure(p)
+        return procs
+
+    def gen_activation_args(self, node):
+        args = ""
+        for arg in node:
+            if isinstance(arg, String):
+                args += f"\"{arg.token.value}\","
+            elif isinstance(arg, Num):
+                args += f"{arg.token.value},"
+            else:
+                args += f"{arg},"
+        args = args[:-1]
+        return args
+
+    def gen_procedure_args(self, node):
+        args = ""
+        for arg in node:
+            args += f"dynamic {arg},"
+        args = args[:-1]
+        return args
+
+    def gen_activation(self, node):
+        args = self.gen_activation_args(node.args)
+        id = node.id.value
+        return f"{id}({args});"
+
+    def gen_procedure(self, node):
+        args = self.gen_procedure_args(node.args)
+        id = node.identifier.value
+        body = self.gen_stmts(node.body.stmts)
+        if node.isVoid:
+            return f"public static void {id}({args})\n{{{body}}}"
+        return f"public static dynamic {id}({args})\n{{{body}}}"
 
     def gen_while(self, node):
         cond = self.gen_expr(node.cond, "")
@@ -115,8 +166,10 @@ class CSharp(ICodeGenerator):
             return self.gen_loop(node)
         elif isinstance(node, While):
             return self.gen_while(node)
+        elif isinstance(node, Activation):
+            return self.gen_activation(node)
         else:
-            return # NOT IMPLEMENTED
+            return "" # NOT IMPLEMENTED
 
     def gen_print(self, node):
         val = self.gen_expr(node.val, "")
