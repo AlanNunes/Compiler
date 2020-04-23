@@ -15,12 +15,7 @@ from ast import AST
 msgs_log.print_welcome("Welcome to AN Compiler!", "\"it's easier to ask forgiveness than it is to get permission\"", "Contribute here: https://github.com/AlanNunes/Compiler", "Author: Alan Nunes da Silva (alann.625@gmail.com)", "Version 1.0 (2020)")
 
 # Get command line arguments
-#args = cl_args.get_args()
-class Arg:
-    src = "tests\procedure.an"
-    dst = None
-
-args = Arg()
+args = cl_args.get_args()
 
 # Prepare Compiler Environment
 prepare_compiler.load_csharp_environment()
