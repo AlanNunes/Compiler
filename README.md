@@ -1,6 +1,11 @@
 # This Is a Programming Language (AN)
 It's the first compiler I write. I am building a new own programming language.
 
+|                      | Variables | If/ElseIf/Else | Loop  | Function | Recursion |
+| -------------------- |:---------:|:--------------:|:-----:|:--------:|:---------:|
+| Runtime      	       | ✔         | ✔             | ✔     | ✔       | ✔	 |
+| Code Generation      | ✔         | ✔             | ✔     | ❌      | ❌	       |
+
 # Grammar
 [See the grammar here](grammar.txt)
 
@@ -8,8 +13,58 @@ It's the first compiler I write. I am building a new own programming language.
 Python version >= 3 ([install python](https://www.python.org/downloads))
 
 # Instructions
-Open your bash, got to project's root directory and then type ``python main.py tests\fibonacci.an``.  
+Open your bash, got to project's root directory and then type ``python main.py --src tests\fibonacci.an``. Type ``python main.py --help`` to see more options.  
 You can write your own algorithm creating a new file ``new_file.an`` and then running it as explained above.
+
+# Code Generation
+### source code
+```
+loop 7:
+	print "Hello World"
+endloop
+```
+### is translated to:
+```C#
+namespace an
+{
+    class Program
+    {
+        static void Main()
+        {
+
+            for (int i = 0; i < 7; i += 1)
+            {
+                System.Console.WriteLine("Hello World");
+            }
+
+        }
+    }
+}
+```
+
+# Abstract Syntax Tree (AST)
+```
+-> Statements
+      |-> Loop
+      |-> VarDeclare
+      |______|______|-> x
+      |______|-> =
+      |______|______|-> Num
+      |______|______|______|-> 0
+      |______|-> x
+      |-> <
+      |______|-> Num
+      |______|______|-> 10
+      |______|-> x
+      |-> =
+      |______|______|-> x
+      |______|-> +
+      |______|______|-> Num
+      |______|______|______|-> 1
+      |-> Statements
+      |______|-> Print
+      |______|______|-> x
+```
 
 # Samples
 ## Fibonacci
