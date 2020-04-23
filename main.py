@@ -11,6 +11,9 @@ from runtime.interpreter import Interpreter
 from code_generator import CSharp
 from ast import AST
 
+# Welcome
+msgs_log.print_welcome("Welcome to AN Compiler!", "\"it's easier to ask forgiveness than it is to get permission\"", "Contribute here: https://github.com/AlanNunes/Compiler", "Author: Alan Nunes da Silva (alann.625@gmail.com)", "Version 1.0 (2020)")
+
 # Get command line arguments
 args = cl_args.get_args()
 
@@ -70,7 +73,7 @@ if f.mode == 'r':
     csc = os.environ['CSharpComp']
     src = os.path.splitext(f_name)[0]
     dst = args.dst if args.dst else f"{f_name}"
-    os.system(f'{csc}/csc -optimize -out:\"{dst}.exe\" \"{src}.cs\"')
+    os.system(f'{csc}/csc -optimize /nologo -out:\"{dst}.exe\" \"{src}.cs\"')
     end = time.time()
     print(f"*Output: '{src}.exe'")
     print("Execution time: " + str(end - start) + "ms")
@@ -81,7 +84,7 @@ if f.mode == 'r':
     # =======================================================
     if not parser.error:
         start = time.time()
-        msgs_log.print_title("RunExecution time")
+        msgs_log.print_title("Runtime")
         interpreter = Interpreter(None)
         interpreter.visit(ast)
         end = time.time()

@@ -8,6 +8,9 @@ class ICodeGenerator:
         self.output = ""
         self.current_symb_tbl = symb_tbl
 
+    def gen_function(self, node):
+        pass
+
     def gen_while(self, node):
         pass
 
